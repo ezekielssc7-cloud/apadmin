@@ -1,0 +1,2676 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style></head><body><title>APAdmin Queue</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* ==========================================================================
+   APAdmin design system, v2: "counter and ticket"
+   Concept: public-service signage. Ink-black ground, one signal blue, warm
+   ticket paper, IBM Plex throughout. Information is laid out like a
+   departure board and a printed ticket, separated by rules rather than boxes.
+   Layers: 1 primitives > 2 semantic tokens > 3 base > 4 components > 5 screens.
+   ========================================================================== */
+:root{
+  /* 1. Primitives ------------------------------------------------------- */
+  --white:#ffffff;
+  --ink-950:#07080b; --ink-900:#0b0d12; --ink-850:#11141b; --ink-800:#161a23;
+  --ink-700:#1f2430; --ink-600:#2c3240; --ink-500:#4a5163; --ink-400:#8a92a8;
+  --ink-300:#aeb5c6; --ink-100:#e9ecf2; --ink-50:#f5f6f8;
+  --blue-300:#a9bdf9; --blue-400:#5d83f7; --blue-500:#3d6bf5; --blue-600:#2f58d9;
+  --blue-800:#1f2f5e; --blue-900:#121a33;
+  --green-400:#6cc79b; --green-900:#10251c;
+  --red-400:#f2616f;  --red-900:#2a1116;
+  --paper:#f4f2ec; --paper-ink:#14161c; --paper-muted:#5e6372; --paper-line:#d9d5ca;
+
+  /* 2. Semantic tokens -------------------------------------------------- */
+  --canvas:var(--ink-950);        /* home page, hero */
+  --bg:var(--ink-900);            /* every other screen */
+  --surface:var(--ink-850);       /* framed objects: board, inputs, sheet */
+  --surface-2:var(--ink-800);     /* hover rows, selected segment */
+  --line:var(--ink-700);          /* rules and hairlines */
+  --line-strong:var(--ink-600);   /* control borders */
+  --ink:var(--ink-50);
+  --ink-soft:var(--ink-100);
+  --muted:var(--ink-300);
+  --subtle:var(--ink-400);
+  --disabled:var(--ink-500);
+  --overlay:rgba(7,8,11,.72);
+
+  --accent:var(--blue-500); --accent-hover:var(--blue-400); --accent-press:var(--blue-600);
+  --accent-ink:var(--white); --accent-soft:var(--blue-900); --accent-line:var(--blue-800);
+  --accent-text:var(--blue-300);
+
+  --good:var(--green-400); --good-soft:var(--green-900);
+  --warn:var(--ink-100);   --warn-soft:var(--ink-700);
+  --bad:var(--red-400);    --bad-soft:var(--red-900);
+
+  --ticket:var(--paper); --ticket-ink:var(--paper-ink); --ticket-muted:var(--paper-muted); --ticket-line:var(--paper-line);
+  --hero-ink:var(--ink);
+  /* service codes: tints of the one blue, so the palette stays single-hued */
+  --c-ar:#3d6bf5; --c-vl:#7ea2fb; --c-fp:#5d83f7; --c-ge:#a9bdf9; --c-rg:#8d9ff0;
+
+  /* Type: IBM Plex, a family built for public information */
+  --f-display:"IBM Plex Sans Condensed","IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --fs-2xs:11px; --fs-xs:12px; --fs-sm:13px; --fs-base:15px; --fs-md:16px;
+  --fs-lg:20px; --fs-xl:24px; --fs-2xl:32px; --fs-3xl:44px; --fs-num:60px;
+  --fs-hero:clamp(38px,5.4vw,64px);
+  --lh-tight:1; --lh-snug:1.25; --lh-body:1.55;
+  --tr-caps:.08em; --tr-display:-.01em;
+
+  /* Space: 4px grid */
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:20px; --sp-6:24px; --sp-8:32px; --sp-10:40px; --sp-12:48px; --sp-16:64px;
+
+  /* Radius: small and consistent. Controls 8, objects 12. */
+  --r-xs:3px; --r-sm:6px; --r-md:8px; --r-lg:12px; --r-full:999px;
+
+  /* Elevation: rules first; shadow only for things that float */
+  --sh-1:0 1px 0 rgba(0,0,0,.35);
+  --sh-float:0 18px 40px -18px rgba(0,0,0,.85),0 2px 6px rgba(0,0,0,.35);
+  --ring:0 0 0 3px rgba(61,107,245,.32);
+  --ring-bad:0 0 0 3px rgba(242,97,111,.22);
+
+  /* Motion */
+  --ease:cubic-bezier(.2,.7,.2,1); --ease-out:cubic-bezier(.16,1,.3,1);
+  --t-fast:.12s; --t:.18s; --t-slow:.4s;
+
+  /* Layout */
+  --col:560px; --col-wide:1120px; --tap:44px;
+  --gutter-l:max(16px,env(safe-area-inset-left,0px));
+  --gutter-r:max(16px,env(safe-area-inset-right,0px));
+  --z-push:30; --z-scrim:40; --z-sheet:41;
+  color-scheme:dark;
+}
+
+/* 3. Base ---------------------------------------------------------------- */
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:var(--fs-base);line-height:var(--lh-body);padding:0;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;font-feature-settings:"ss02" 1}
+::selection{background:var(--accent);color:var(--accent-ink)}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent-hover);outline-offset:2px;border-radius:var(--r-sm)}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;letter-spacing:var(--tr-display);font-weight:600}
+h1{font-size:var(--fs-2xl);line-height:var(--lh-tight);font-weight:700}
+h2{font-size:var(--fs-lg);line-height:var(--lh-snug)}
+h3{font-size:var(--fs-md);line-height:var(--lh-snug);font-family:var(--f-body);letter-spacing:0}
+p{margin:0}
+b{font-weight:600}
+dl,dd{margin:0}
+ol{margin:0;padding:0;list-style:none}
+
+/* Text roles */
+.muted{color:var(--muted)}
+.small{font-size:var(--fs-sm)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.eyebrow,.lbl{font-family:var(--f-mono);font-size:var(--fs-2xs);font-weight:500;letter-spacing:var(--tr-caps);text-transform:uppercase;color:var(--subtle)}
+.ink{color:var(--ink)}
+.title-lg{font-size:var(--fs-2xl)}
+
+/* Layout helpers */
+.stack{display:flex;flex-direction:column;gap:var(--sp-4)}
+.stack-sm{display:flex;flex-direction:column;gap:var(--sp-2)}
+.row-between{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-3)}
+.center{text-align:center}
+
+/* App frame: full window; each screen = topbar / scrolling body / foot */
+.screen-wrap{position:relative;height:100%;overflow:hidden;background:var(--bg);display:flex;flex-direction:column}
+.screen{flex:1 1 auto;display:flex;flex-direction:column;min-height:0}
+.topbar,.body,.foot{padding-left:max(var(--gutter-l),calc((100% - var(--col))/2));padding-right:max(var(--gutter-r),calc((100% - var(--col))/2))}
+.topbar{display:flex;align-items:center;gap:var(--sp-3);padding-top:var(--sp-3);padding-bottom:var(--sp-3);min-height:60px;border-bottom:1px solid var(--line)}
+.topbar h2{font-size:var(--fs-lg)}
+.topbar .tag{margin-left:auto}
+.body{flex:1 1 auto;overflow-y:auto;padding-top:var(--sp-6);padding-bottom:var(--sp-8);display:flex;flex-direction:column;gap:var(--sp-6);min-height:0}
+.body > *{flex-shrink:0}
+.foot{padding-top:var(--sp-3);padding-bottom:calc(var(--sp-4) + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:var(--sp-1);border-top:1px solid var(--line);background:var(--bg)}
+
+/* 4. Components ------------------------------------------------------------ */
+
+/* Button */
+.btn{position:relative;display:flex;align-items:center;justify-content:center;gap:var(--sp-2);width:100%;min-height:48px;padding:0 var(--sp-5);border:1px solid transparent;border-radius:var(--r-md);font-weight:600;font-size:var(--fs-md);text-align:center;transition:background-color var(--t-fast) var(--ease),border-color var(--t-fast),color var(--t-fast),transform var(--t-fast)}
+.btn:active:not([disabled]){transform:translateY(1px)}
+.btn-primary{background:var(--accent);color:var(--accent-ink)}
+.btn-primary:hover:not([disabled]){background:var(--accent-hover)}
+.btn-primary:active:not([disabled]){background:var(--accent-press)}
+.btn-ghost{background:transparent;border-color:var(--line-strong);color:var(--ink)}
+.btn-ghost:hover:not([disabled]){background:var(--surface);border-color:var(--disabled)}
+.btn-text{background:none;color:var(--muted);min-height:var(--tap);font-size:var(--fs-sm);font-weight:500;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:3px}
+.btn-text:hover{color:var(--ink);text-decoration-color:currentColor}
+.btn[disabled]{background:transparent;border-color:var(--line);color:var(--subtle);cursor:not-allowed}
+.scan-btn{border:1px dashed var(--accent-line);background:var(--accent-soft);color:var(--accent-text)}
+.scan-btn:hover:not([disabled]){border-color:var(--accent);color:var(--ink);background:var(--accent-soft)}
+
+/* Icon button */
+.back,.bot-head .x{width:36px;height:36px;flex:none;display:grid;place-items:center;border-radius:var(--r-md);border:1px solid var(--line-strong);background:transparent;color:var(--ink);font-size:20px;line-height:1;transition:background-color var(--t-fast),border-color var(--t-fast)}
+.back:hover,.bot-head .x:hover{background:var(--surface);border-color:var(--disabled)}
+
+/* Tag: squared status label */
+.tag{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 8px;border-radius:var(--r-sm);font-size:var(--fs-xs);font-weight:500;white-space:nowrap;background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+.tag.good{background:var(--good-soft);color:var(--good);border-color:color-mix(in srgb,var(--good) 24%,transparent)}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--line-strong)}
+.tag.accent{background:var(--accent-soft);color:var(--accent-text);border-color:var(--accent-line)}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+.live .dot{animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* Brand mark */
+.logo{width:34px;height:34px;flex:none;border-radius:var(--r-sm);background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-family:var(--f-mono);font-size:var(--fs-sm);font-weight:600;letter-spacing:-.02em}
+
+/* Panel: kept for framed objects only (not used for page sections) */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:var(--sp-5);display:flex;flex-direction:column;gap:var(--sp-4)}
+.panel-head{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-3)}
+
+/* Readout: one framed line of live status */
+.board{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);border:1px solid var(--line);border-radius:var(--r-md)}
+.board b{font-family:var(--f-mono);font-size:var(--fs-lg);font-weight:600}
+
+/* List group: rows split by rules inside one frame (choices, services, docs, checklist) */
+.list-group,#svcList,.docs,.checklist{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;background:var(--surface)}
+.list-group > * + *,#svcList > * + *,.docs > * + *,.checklist > * + *{border-top:1px solid var(--line)}
+
+/* Banner */
+.notice,.alert,.follow{display:flex;gap:var(--sp-3);align-items:flex-start;padding:var(--sp-3) var(--sp-4);border-radius:var(--r-md);border:1px solid var(--accent-line);background:var(--accent-soft);color:var(--ink);font-size:var(--fs-sm);line-height:var(--lh-body)}
+.notice .ico,.alert .ico,.follow .fi{flex:none;width:24px;height:24px;border-radius:var(--r-sm);background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:700;font-size:var(--fs-xs);margin-top:1px}
+.alert{font-size:var(--fs-base);align-items:center}
+
+/* Option rows */
+.choice,.svc{display:flex;gap:var(--sp-4);align-items:center;width:100%;padding:var(--sp-4);text-align:left;border:0;border-radius:0;background:transparent;transition:background-color var(--t-fast) var(--ease)}
+.choice:hover,.svc:hover{background:var(--surface-2)}
+.choice .ic{flex:none;width:40px;height:40px;border-radius:var(--r-md);background:var(--accent-soft);border:1px solid var(--accent-line);color:var(--accent-text);display:grid;place-items:center;transition:background-color var(--t-fast),color var(--t-fast)}
+.choice:hover .ic{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.choice .t{font-weight:600;font-size:var(--fs-md)}
+.choice .chev{margin-left:auto;color:var(--subtle);font-size:22px;transition:transform var(--t) var(--ease-out),color var(--t-fast)}
+.choice:hover .chev{color:var(--ink);transform:translateX(3px)}
+
+.svc{position:relative;padding-right:calc(var(--sp-4) + 30px)}
+.svc::after{content:"";position:absolute;right:var(--sp-4);top:50%;width:18px;height:18px;margin-top:-9px;border-radius:50%;border:1.5px solid var(--disabled);transition:border-color var(--t-fast),box-shadow var(--t-fast)}
+.svc[aria-pressed="true"]{background:var(--accent-soft)}
+.svc[aria-pressed="true"]::after{border-color:var(--accent);box-shadow:inset 0 0 0 4px var(--accent-soft),inset 0 0 0 9px var(--accent)}
+.svc .code{flex:none;width:40px;height:40px;border-radius:var(--r-md);border:1px solid var(--line-strong);color:var(--c,var(--accent-text));display:grid;place-items:center;font-family:var(--f-mono);font-weight:600;font-size:var(--fs-sm);transition:background-color var(--t-fast),color var(--t-fast),border-color var(--t-fast)}
+.svc[aria-pressed="true"] .code{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.svc .meta{flex:1;min-width:0}
+.svc .name{font-weight:600}
+.svc .sub{font-size:var(--fs-sm);color:var(--muted);font-variant-numeric:tabular-nums}
+.svc .wait{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:1px;font-size:var(--fs-md);color:var(--muted)}
+.svc .wait.long{color:var(--ink);font-weight:600}
+
+/* Form field */
+.field{display:flex;flex-direction:column;gap:var(--sp-2)}
+.field label{font-size:var(--fs-sm);font-weight:500;color:var(--ink-soft)}
+.field input,.bot-form input{height:48px;width:100%;min-width:0;padding:0 var(--sp-4);border-radius:var(--r-md);border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);font:inherit;font-size:var(--fs-md);transition:border-color var(--t-fast),box-shadow var(--t-fast)}
+.field input::placeholder,.bot-form input::placeholder{color:var(--subtle)}
+.field input:hover,.bot-form input:hover{border-color:var(--disabled)}
+.field input:focus,.bot-form input:focus{outline:none;border-color:var(--accent);box-shadow:var(--ring)}
+.field input.mono{font-family:var(--f-mono);letter-spacing:.06em}
+.field input[aria-invalid="true"]{border-color:var(--bad);box-shadow:var(--ring-bad)}
+.err{color:var(--bad);font-size:var(--fs-sm);min-height:18px;font-weight:500}
+.err:empty{min-height:0}
+.or{display:flex;align-items:center;gap:var(--sp-3);color:var(--subtle);font-family:var(--f-mono);font-size:var(--fs-2xs);text-transform:uppercase;letter-spacing:var(--tr-caps)}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+
+/* Segmented control */
+.kiosk-tabs{display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:3px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md)}
+.kiosk-tabs button{border:0;background:none;min-height:38px;border-radius:var(--r-sm);font-weight:500;font-size:var(--fs-sm);color:var(--muted);transition:background-color var(--t-fast),color var(--t-fast)}
+.kiosk-tabs button:hover{color:var(--ink)}
+.kiosk-tabs button[aria-selected="true"]{background:var(--ink-700);color:var(--ink);box-shadow:var(--sh-1)}
+
+/* Progress: the tick marks 70%, when the alert is sent */
+.progress{position:relative;height:6px;background:var(--surface-2);border-radius:var(--r-full);overflow:visible}
+.progress i{display:block;height:100%;background:var(--accent);border-radius:var(--r-full);transition:width var(--t-slow) var(--ease-out)}
+.progress::after{content:"";position:absolute;left:70%;top:-4px;bottom:-4px;width:2px;border-radius:1px;background:var(--line-strong)}
+.meter{height:3px;border-radius:var(--r-full);background:var(--line);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--c,var(--accent));transition:width .6s var(--ease-out)}
+
+/* Ticket: printed on paper stock; notches cut in the screen colour */
+.ticket{--notch:var(--bg);background:var(--ticket);color:var(--ticket-ink);border-radius:var(--r-lg);position:relative;overflow:hidden;box-shadow:var(--sh-float)}
+.ticket .top{padding:var(--sp-5) var(--sp-5) var(--sp-4);display:flex;flex-direction:column;gap:var(--sp-1)}
+.ticket .top .small{color:var(--ticket-muted);font-family:var(--f-mono);font-size:var(--fs-xs)}
+.ticket .num{font-family:var(--f-mono);font-weight:600;font-size:var(--fs-num);letter-spacing:-.04em;line-height:1;margin:var(--sp-2) 0 var(--sp-1)}
+.ticket .perf{height:0;border-top:1.5px dashed var(--ticket-line);margin:0 var(--sp-5)}
+.ticket::before,.ticket::after{content:"";position:absolute;width:20px;height:20px;border-radius:50%;background:var(--notch);top:var(--perf-y,128px);transform:translateY(-50%)}
+.ticket::before{left:-10px}.ticket::after{right:-10px}
+.ticket .bottom{padding:var(--sp-4) var(--sp-5) var(--sp-5);display:grid;grid-template-columns:repeat(3,1fr)}
+.ticket .bottom > div + div{border-left:1px solid var(--ticket-line);padding-left:var(--sp-4)}
+.ticket .bottom b{font-family:var(--f-mono);font-size:var(--fs-xl);font-weight:600;display:block;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.ticket .lbl{color:var(--ticket-muted)}
+
+/* Activity feed */
+.feed{display:flex;flex-direction:column;font-size:var(--fs-sm);color:var(--muted);font-variant-numeric:tabular-nums;border-left:1px solid var(--line);margin-left:3px}
+.feed div{display:flex;gap:var(--sp-3);padding:6px 0 6px var(--sp-4);position:relative;animation:feedIn var(--t-slow) var(--ease-out)}
+.feed div::before{content:"";position:absolute;left:-4px;top:13px;width:7px;height:7px;border-radius:50%;background:var(--bg);border:1.5px solid var(--line-strong)}
+.feed div:first-child{color:var(--ink)}
+.feed div:first-child::before{background:var(--accent);border-color:var(--accent)}
+.feed .t{font-family:var(--f-mono);font-size:var(--fs-xs);min-width:40px;color:var(--subtle);padding-top:1px}
+@keyframes feedIn{from{opacity:0;transform:translateY(-4px)}}
+
+/* Phone notification */
+.push{position:absolute;left:50%;width:min(calc(100% - 20px),460px);margin-left:calc(min(calc(100% - 20px),460px) / -2);top:calc(10px + env(safe-area-inset-top,0px));z-index:var(--z-push);background:color-mix(in srgb,var(--surface) 90%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line-strong);border-radius:var(--r-lg);padding:var(--sp-3) var(--sp-4);display:flex;gap:var(--sp-3);box-shadow:var(--sh-float);transform:translateY(-160%);transition:transform var(--t-slow) var(--ease-out);text-align:left}
+.push.show{transform:translateY(0)}
+.push .logo{width:32px;height:32px}
+.push-body{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.push-app{display:flex;justify-content:space-between;gap:var(--sp-2);font-family:var(--f-mono);font-size:var(--fs-2xs);letter-spacing:.04em;color:var(--subtle)}
+.push b{font-size:var(--fs-base)}
+.push p{font-size:var(--fs-sm);line-height:1.45;color:var(--ink-soft)}
+
+/* Avatar */
+.avatar{width:40px;height:40px;flex:none;border-radius:50%;background:var(--ticket);color:var(--ticket-ink);display:grid;place-items:center;font-weight:600;font-size:var(--fs-sm)}
+
+/* 5. Screens --------------------------------------------------------------- */
+
+/* Home */
+.body.home{padding:0;gap:0;background:var(--canvas)}
+.wrap{padding-left:max(var(--gutter-l),calc((100% - var(--col-wide))/2));padding-right:max(var(--gutter-r),calc((100% - var(--col-wide))/2))}
+.hero{position:relative;flex-shrink:0;color:var(--hero-ink);border-bottom:1px solid var(--line)}
+.hero-in{padding-top:var(--sp-5);padding-bottom:var(--sp-8);display:flex;flex-direction:column;gap:var(--sp-8)}
+.hero-top{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-3);flex-wrap:wrap}
+.hero-mark{display:flex;align-items:center;gap:var(--sp-3);font-family:var(--f-display);font-weight:700;font-size:var(--fs-lg);line-height:1.1}
+.hero-mark small{display:block;font-family:var(--f-mono);font-weight:400;font-size:var(--fs-2xs);letter-spacing:var(--tr-caps);text-transform:uppercase;color:var(--subtle)}
+.hero-grid{display:grid;grid-template-columns:1fr;gap:var(--sp-8);align-items:end}
+.hero-copy{display:flex;flex-direction:column;gap:var(--sp-4);min-width:0}
+.hero-copy .eyebrow{color:var(--accent-text)}
+.hero-copy h1{font-size:var(--fs-hero);letter-spacing:-.02em;max-width:12ch}
+.hero-copy h1 em{font-style:normal;color:var(--accent-text)}
+.hero-copy p{color:var(--muted);font-size:17px;max-width:42ch}
+@media (min-width:880px){.hero-grid{grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:var(--sp-12)}}
+
+/* Departure-board style live queue */
+.qboard{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);overflow:hidden;min-width:0}
+.qboard-head{display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);border-bottom:1px solid var(--line)}
+.qboard-head h2{font-size:var(--fs-md)}
+.qboard-cols,.qboard-rows li{display:grid;grid-template-columns:28px minmax(0,1fr) 76px 56px 48px;gap:var(--sp-3);align-items:center;padding:0 var(--sp-4)}
+.qboard-cols{height:32px;font-family:var(--f-mono);font-size:var(--fs-2xs);letter-spacing:var(--tr-caps);text-transform:uppercase;color:var(--subtle);border-bottom:1px solid var(--line)}
+.qboard-rows li{min-height:46px;font-size:var(--fs-sm);transition:background-color var(--t-fast)}
+.qboard-rows li + li{border-top:1px solid var(--line)}
+.qboard-rows li:hover{background:var(--surface-2)}
+.qboard .num{text-align:right}
+.qboard .ctr{width:24px;height:24px;border-radius:var(--r-sm);background:var(--ink-700);color:var(--ink);display:grid;place-items:center;font-size:var(--fs-xs);font-weight:600}
+.qboard .svc-n{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qboard .c-serv{color:var(--accent-text)}
+.qboard .long{color:var(--ink);font-weight:600}
+.qboard .num:not(.long){color:var(--muted)}
+.qboard-rows li.flash .c-serv{animation:flip .9s var(--ease-out)}
+@keyframes flip{0%{background:var(--accent);color:var(--accent-ink)}100%{background:transparent}}
+.qboard-rows .c-serv{border-radius:var(--r-xs);padding:1px 4px;margin-left:-4px}
+@media (max-width:479px){.qboard-cols,.qboard-rows li{grid-template-columns:24px minmax(0,1fr) 48px 40px}.qboard .c-serv{display:none}}
+
+/* Key figures strip + assistant button at its far end */
+.hero-row{display:flex;align-items:center;gap:var(--sp-4);padding-top:var(--sp-5);border-top:1px solid var(--line)}
+.hero-stats{display:flex;flex:1 1 auto;min-width:0}
+.hero-stats div{display:flex;flex-direction:column;gap:2px;padding:0 var(--sp-6);min-width:0}
+.hero-stats div:first-child{padding-left:0}
+.hero-stats div + div{border-left:1px solid var(--line)}
+.hero-stats dt{font-family:var(--f-mono);font-size:var(--fs-2xs);letter-spacing:var(--tr-caps);text-transform:uppercase;color:var(--subtle);white-space:nowrap}
+.hero-stats dd{font-family:var(--f-mono);font-size:var(--fs-2xl);font-weight:500;line-height:1.1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+@media (max-width:479px){.hero-row{gap:var(--sp-3)}.hero-stats div{padding:0 var(--sp-3)}.hero-stats dd{font-size:var(--fs-xl)}.hero-stats dt{font-size:10px;letter-spacing:.04em}}
+
+/* Notice: a full-width strip, not a card */
+.notice-bar{background:var(--accent-soft);border-bottom:1px solid var(--accent-line)}
+.notice-in{display:flex;gap:var(--sp-3);align-items:flex-start;padding-top:var(--sp-3);padding-bottom:var(--sp-3);font-size:var(--fs-sm);color:var(--ink-soft)}
+.notice-in b{color:var(--ink)}
+.notice-in .ico{flex:none;width:20px;height:20px;border-radius:var(--r-xs);background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:700;font-size:var(--fs-xs);margin-top:1px}
+
+/* Home sections: heading column + content, separated by rules */
+.home-secs{display:flex;flex-direction:column;padding-bottom:var(--sp-12)}
+.sec{display:grid;grid-template-columns:1fr;gap:var(--sp-4);padding:var(--sp-8) 0;border-bottom:1px solid var(--line)}
+.sec:last-child{border-bottom:0}
+.sec-h{display:flex;flex-direction:column;gap:var(--sp-2)}
+.sec-h p{max-width:34ch}
+@media (min-width:880px){.sec{grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:var(--sp-12)}}
+
+/* How it works: a real sequence, numbered and joined by a rule */
+.how{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-4);counter-reset:step}
+.how li{display:flex;flex-direction:column;gap:var(--sp-2);position:relative;font-size:var(--fs-sm);color:var(--muted)}
+.how li b{color:var(--ink);font-size:var(--fs-base)}
+.how .n{font-family:var(--f-mono);font-size:var(--fs-xs);font-weight:600;color:var(--accent-text);display:flex;align-items:center;gap:var(--sp-2)}
+.how .n::after{content:"";flex:1;height:1px;background:var(--line)}
+.how li:last-child .n::after{display:none}
+@media (max-width:479px){.how{grid-template-columns:1fr;gap:var(--sp-5)}.how .n::after{display:none}}
+
+/* Before you come: definition rows */
+.info{display:flex;flex-direction:column}
+.info div{display:grid;grid-template-columns:96px minmax(0,1fr);gap:var(--sp-4);padding:var(--sp-3) 0;border-top:1px solid var(--line);font-size:var(--fs-sm)}
+.info div:first-child{border-top:0;padding-top:0}
+.info dt{font-family:var(--f-mono);font-size:var(--fs-2xs);letter-spacing:var(--tr-caps);text-transform:uppercase;color:var(--subtle);padding-top:3px}
+.info dd b{display:block;font-size:var(--fs-base)}
+.info dd span{color:var(--muted)}
+
+/* Login + card scan */
+.scan-box{display:flex;gap:var(--sp-3);align-items:center;padding:var(--sp-2);border:1px solid var(--line);border-radius:var(--r-md)}
+.scan-box img{width:72px;height:48px;object-fit:cover;border-radius:var(--r-sm);flex:none;background:var(--line)}
+.scan-txt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.scan-box.ok{border-color:var(--accent)}
+.scan-box.bad{border-color:var(--bad)}
+.scan-box.bad b{color:var(--bad)}
+.example{font-size:var(--fs-xs);color:var(--muted);padding:var(--sp-2) var(--sp-3);border:1px solid var(--line);border-radius:var(--r-md)}
+
+/* Kiosk */
+.scanner{aspect-ratio:1.4;max-width:100%;border-radius:var(--r-lg);background:var(--canvas);border:1px solid var(--line);position:relative;overflow:hidden;display:grid;place-items:center}
+.scanner::before{content:"";position:absolute;inset:14%;border:1px dashed var(--line-strong);border-radius:var(--r-md)}
+.card-id{position:relative;width:60%;aspect-ratio:1.586;border-radius:var(--r-md);background:var(--accent);color:var(--white);padding:var(--sp-3);display:flex;flex-direction:column;justify-content:space-between;font-family:var(--f-mono);font-size:10px;letter-spacing:.06em;box-shadow:var(--sh-float);transition:transform .5s var(--ease-out)}
+.card-id b{font-size:var(--fs-xs);font-weight:600}
+.scanline{position:absolute;left:10%;right:10%;height:2px;background:var(--accent-text);top:15%;opacity:0}
+.scanning .scanline{opacity:1;animation:scan 1.1s ease-in-out infinite alternate}
+@keyframes scan{to{top:82%}}
+.scan-ok,.scan-err{position:absolute;inset:auto var(--sp-3) var(--sp-3);color:var(--white);border-radius:var(--r-md);padding:6px 10px;font-size:var(--fs-sm);font-weight:600;text-align:center}
+.scan-ok{background:var(--accent)}
+.scan-err{background:var(--bad)}
+
+/* Checking */
+.steps{display:flex;flex-direction:column}
+.step{display:flex;gap:var(--sp-3);align-items:center;padding:var(--sp-3) 0;color:var(--subtle);transition:color var(--t);border-bottom:1px solid var(--line)}
+.step:last-child{border-bottom:0}
+.step .ck{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--line-strong);display:grid;place-items:center;flex:none;font-size:var(--fs-2xs);font-weight:700}
+.step.run{color:var(--ink)}
+.step.run .ck{border-color:var(--accent);border-right-color:transparent;animation:spin .8s linear infinite}
+.step.ok{color:var(--ink)}
+.step.ok .ck{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Check-in */
+.qr-box{background:var(--white);border-radius:var(--r-lg);padding:var(--sp-5);align-self:center;box-shadow:var(--sh-float)}
+.qr-box canvas{display:block;width:200px;height:200px;image-rendering:pixelated}
+.qr-num{text-align:center;font-size:var(--fs-xl);font-weight:600}
+
+/* Called */
+.callout{border-radius:var(--r-lg);background:var(--accent);color:var(--accent-ink);padding:var(--sp-6);display:flex;flex-direction:column;gap:var(--sp-2);position:relative;overflow:hidden}
+.callout .eyebrow{color:color-mix(in srgb,var(--accent-ink) 80%,transparent);display:flex;align-items:center;gap:var(--sp-2)}
+.callout .eyebrow::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;animation:pulse 1.4s ease-in-out infinite}
+.callout .big{font-family:var(--f-mono);font-weight:600;font-size:var(--fs-3xl);line-height:1;letter-spacing:-.04em}
+.ring{display:none}
+.staff{display:flex;gap:var(--sp-3);align-items:center;padding-bottom:var(--sp-4);border-bottom:1px solid var(--line)}
+
+/* Session notes */
+.sess-head{border:1px solid var(--line);background:var(--surface);border-radius:var(--r-lg);padding:var(--sp-5);display:flex;flex-direction:column;gap:var(--sp-4)}
+.sess-top{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--sp-3)}
+.sess-top b{font-family:var(--f-display);font-size:var(--fs-xl);font-weight:600}
+.chip-lg{background:var(--ticket);color:var(--ticket-ink);border-radius:var(--r-sm);padding:4px 8px;font-weight:600;font-size:var(--fs-sm)}
+.sess-meta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--sp-3);padding-top:var(--sp-4);border-top:1px solid var(--line)}
+.sess-meta div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.sess-meta b{font-size:var(--fs-sm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:400px){.sess-meta{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.note-sec{display:flex;flex-direction:column;gap:var(--sp-3);padding-top:var(--sp-6);border-top:1px solid var(--line)}
+.note-sec h3{font-family:var(--f-mono);font-size:var(--fs-2xs);font-weight:500;letter-spacing:var(--tr-caps);text-transform:uppercase;color:var(--subtle)}
+.sec-row{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-3)}
+.outcome{display:flex;gap:var(--sp-3);align-items:center;flex-wrap:wrap;font-weight:600;font-size:var(--fs-md)}
+.disc{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:var(--sp-2)}
+.disc li{position:relative;padding-left:var(--sp-5);font-size:var(--fs-base);line-height:var(--lh-body);color:var(--ink-soft)}
+.disc li::before{content:"";position:absolute;left:2px;top:.72em;width:8px;height:1.5px;background:var(--accent-text)}
+.follow{border-color:var(--line);background:transparent;padding:var(--sp-4)}
+.follow .fi{background:var(--ink-700);color:var(--ink)}
+.follow.yes{border-color:var(--accent-line);background:var(--accent-soft)}
+.follow.yes .fi{background:var(--accent);color:var(--accent-ink)}
+.follow b{display:block;font-size:var(--fs-base)}
+.follow p{font-size:var(--fs-sm);color:var(--muted);margin-top:2px}
+.checklist label{display:flex;gap:var(--sp-3);align-items:flex-start;padding:var(--sp-3) var(--sp-4);font-size:var(--fs-base);cursor:pointer;transition:background-color var(--t-fast)}
+.checklist label:hover{background:var(--surface-2)}
+.checklist input{appearance:none;-webkit-appearance:none;width:18px;height:18px;flex:none;margin:2px 0 0;border:1.5px solid var(--disabled);border-radius:var(--r-xs);background:transparent;display:grid;place-items:center;cursor:pointer;transition:background-color var(--t-fast),border-color var(--t-fast),transform var(--t-fast)}
+.checklist input::after{content:"";width:9px;height:5px;border:2px solid var(--accent-ink);border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px) scale(.4);opacity:0;transition:transform var(--t) var(--ease-out),opacity var(--t-fast)}
+.checklist input:active{transform:scale(.9)}
+.checklist input:checked{background:var(--accent);border-color:var(--accent)}
+.checklist input:checked::after{opacity:1;transform:rotate(-45deg) translate(1px,-1px) scale(1)}
+.checklist .due{display:block;font-family:var(--f-mono);font-size:var(--fs-xs);color:var(--subtle);margin-top:2px}
+.checklist input:checked + span{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--subtle)}
+.doc{display:flex;gap:var(--sp-3);align-items:center;padding:var(--sp-3) var(--sp-4);font-size:var(--fs-sm)}
+.doc .di{flex:none;width:28px;height:34px;border-radius:var(--r-xs);background:var(--ticket);color:var(--ticket-ink);display:grid;place-items:center;font-family:var(--f-mono);font-size:9px;font-weight:600}
+.doc span:last-child{min-width:0}
+
+/* Done */
+.done-body{padding-top:var(--sp-10);gap:var(--sp-8);text-align:center}
+.done-mark{width:64px;height:64px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;align-self:center;animation:popIn .5s var(--ease-out)}
+@keyframes popIn{from{transform:scale(.6);opacity:0}}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.stats div{padding:var(--sp-4) var(--sp-2);display:flex;flex-direction:column;gap:2px}
+.stats div + div{border-left:1px solid var(--line)}
+.stats b{font-family:var(--f-mono);font-size:var(--fs-xl);font-weight:500;display:block;letter-spacing:-.02em}
+.stars{display:flex;justify-content:center;gap:var(--sp-1)}
+.stars button{border:0;background:none;font-size:30px;line-height:1;color:var(--line-strong);padding:var(--sp-1);transition:color var(--t-fast),transform var(--t-fast)}
+.stars button.on{color:var(--accent)}
+.stars:hover button{color:var(--accent-hover)}
+.stars button:hover ~ button{color:var(--line-strong)}
+.stars button:active{transform:scale(.9)}
+
+/* AI assistant: round button and chat sheet */
+.bot-fab{flex:none;margin-left:auto;display:flex;align-items:center;gap:var(--sp-3);background:none;border:0;padding:0;color:var(--hero-ink);text-align:right}
+.bot-fab .orb{width:52px;height:52px;border-radius:50%;background:var(--ticket);color:var(--accent);display:grid;place-items:center;position:relative;border:1px solid var(--ticket);transition:transform var(--t) var(--ease-out),box-shadow var(--t)}
+.bot-fab .orb::after{content:"";position:absolute;right:1px;top:1px;width:12px;height:12px;border-radius:50%;background:var(--good);border:2px solid var(--canvas)}
+.bot-fab:hover .orb{transform:translateY(-2px);box-shadow:0 8px 18px -8px rgba(0,0,0,.9)}
+.bot-fab:active .orb{transform:scale(.95)}
+.bot-fab .lbl{order:-1;color:var(--muted);letter-spacing:.06em;font-size:var(--fs-2xs);white-space:nowrap;line-height:1.3;transition:color var(--t-fast)}
+.bot-fab:hover .lbl{color:var(--ink)}
+@media (max-width:479px){.bot-fab{flex-direction:column;gap:var(--sp-1)}.bot-fab .lbl{order:0;max-width:none;text-align:center;font-size:10px}.bot-fab .orb{width:48px;height:48px}}
+
+.bot-scrim{position:fixed;inset:0;background:var(--overlay);z-index:var(--z-scrim);opacity:0;pointer-events:none;transition:opacity var(--t)}
+.bot-scrim.open{opacity:1;pointer-events:auto}
+.bot{position:fixed;z-index:var(--z-sheet);top:0;right:0;bottom:0;width:min(420px,100%);background:var(--bg);border-left:1px solid var(--line-strong);display:flex;flex-direction:column;box-shadow:var(--sh-float);transform:translateX(100%);visibility:hidden;transition:transform .3s var(--ease-out),visibility 0s .3s}
+.bot.open{transform:none;visibility:visible;transition:transform .3s var(--ease-out),visibility 0s}
+@media (max-width:560px){.bot{top:auto;height:92%;width:100%;border-left:0;border-top:1px solid var(--line-strong);border-radius:var(--r-lg) var(--r-lg) 0 0;transform:translateY(100%)}}
+.bot-head{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);border-bottom:1px solid var(--line)}
+.bot-av{width:36px;height:36px;border-radius:var(--r-md);background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;flex:none}
+.bot-name{display:flex;flex-direction:column;min-width:0}
+.bot-name b{font-family:var(--f-display);font-size:var(--fs-md);font-weight:600}
+.bot-status{display:flex;align-items:center;gap:6px;color:var(--good);font-size:var(--fs-xs)}
+.bot-head .x{margin-left:auto;font-size:var(--fs-sm)}
+.bot-msgs{flex:1 1 auto;min-height:0;overflow-y:auto;padding:var(--sp-4);display:flex;flex-direction:column;gap:var(--sp-3)}
+.msg{max-width:86%;padding:10px 14px;border-radius:var(--r-lg);font-size:var(--fs-base);line-height:var(--lh-body);overflow-wrap:anywhere;animation:feedIn .2s var(--ease-out)}
+.msg p+p,.msg p+ul,.msg ul+p{margin-top:6px}
+.msg ul{margin:4px 0 0;padding-left:18px}
+.msg.me{align-self:flex-end;background:var(--accent);color:var(--accent-ink);border-bottom-right-radius:var(--r-xs)}
+.msg.ai{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:var(--r-xs)}
+.msg.ai b{color:var(--accent-text)}
+.typing{display:inline-flex;gap:4px;padding:5px 0}
+.typing i{width:6px;height:6px;border-radius:50%;background:var(--subtle);animation:blink 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes blink{0%,100%{opacity:.25;transform:none}50%{opacity:1;transform:translateY(-2px)}}
+.sugg{display:flex;flex-wrap:wrap;gap:var(--sp-2);animation:feedIn .25s var(--ease-out)}
+.sugg-h{width:100%;font-family:var(--f-mono);font-size:var(--fs-2xs);letter-spacing:var(--tr-caps);text-transform:uppercase;color:var(--subtle)}
+.sugg button{border:1px solid var(--line-strong);background:transparent;color:var(--ink-soft);border-radius:var(--r-md);padding:7px 12px;font-size:var(--fs-sm);text-align:left;transition:border-color var(--t-fast),color var(--t-fast),background-color var(--t-fast)}
+.sugg button:hover{border-color:var(--accent);color:var(--ink);background:var(--accent-soft)}
+.msg-act{align-self:flex-start;border:1px solid var(--accent-line);background:var(--accent-soft);color:var(--accent-text);border-radius:var(--r-md);padding:8px 13px;font-weight:600;font-size:var(--fs-sm);animation:feedIn .25s var(--ease-out);transition:background-color var(--t-fast),color var(--t-fast)}
+.msg-act:hover{background:var(--accent);color:var(--accent-ink)}
+.bot-form{display:flex;gap:var(--sp-2);padding:var(--sp-3) var(--sp-4) calc(var(--sp-4) + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line)}
+.bot-form input{height:46px;font-size:var(--fs-base)}
+.bot-form button{width:46px;height:46px;border-radius:var(--r-md);border:0;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;flex:none;transition:opacity var(--t-fast),background-color var(--t-fast)}
+.bot-form button:hover:not([disabled]){background:var(--accent-hover)}
+.bot-form button[disabled]{opacity:.35;cursor:default}
+
+
+/* Home v3: app-style front page (greeting, big question, start cards, popular questions) */
+.body.home{background:
+  radial-gradient(90% 55% at 0% 0%,#0f3150 0%,transparent 62%),
+  radial-gradient(80% 45% at 100% 22%,#14245c 0%,transparent 60%),
+  var(--canvas)}
+.home3{width:100%;max-width:600px;margin:0 auto;padding:var(--sp-2) max(var(--gutter-l),20px) var(--sp-10);display:flex;flex-direction:column;gap:var(--sp-6)}
+.h3-top{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-3)}
+.h3-hi b{display:block;font-size:var(--fs-lg);font-weight:600}
+.h3-hi span{font-size:var(--fs-sm);color:var(--muted)}
+.h3-av{width:44px;height:44px;border-radius:50%;flex:none;display:grid;place-items:center;color:var(--ink);background:linear-gradient(145deg,#2a3f7a,#0d1530);border:2px solid rgba(255,255,255,.14);font-weight:600;font-size:var(--fs-sm)}
+.h3-q{font-family:var(--f-body);font-weight:500;font-size:clamp(38px,10vw,54px);line-height:1.08;letter-spacing:-.025em;margin:var(--sp-2) 0 0;max-width:11ch}
+.bot-inline{display:inline-grid;place-items:center;vertical-align:-.12em;width:1.25em;height:.86em;margin-left:.12em;border-radius:.32em;border:1px solid rgba(255,255,255,.25);background:radial-gradient(120% 120% at 30% 20%,#7fb2ff 0%,#3d6bf5 45%,#1b2f7a 100%);color:#fff;box-shadow:0 8px 24px -8px rgba(61,107,245,.8),inset 0 1px 0 rgba(255,255,255,.35);padding:0;transition:transform var(--t) var(--ease-out),box-shadow var(--t)}
+.bot-inline svg{width:.56em;height:.56em}
+.bot-inline:hover{transform:translateY(-3px) rotate(-4deg);box-shadow:0 12px 28px -8px rgba(61,107,245,.95),inset 0 1px 0 rgba(255,255,255,.35)}
+.bot-inline:active{transform:scale(.94)}
+.h3-sec{display:flex;flex-direction:column;gap:var(--sp-3)}
+.h3-head{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-3)}
+.h3-head h2{font-family:var(--f-body);font-size:var(--fs-md);font-weight:600;letter-spacing:0}
+.h3-head .side{font-size:var(--fs-sm);color:var(--muted);display:inline-flex;align-items:center;gap:6px;background:none;border:0;padding:0}
+button.side:hover{color:var(--ink)}
+.h3-head .side .dot{color:var(--good)}
+.glass{background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.1);border-radius:20px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.bento{display:grid;grid-template-columns:1.12fr 1fr;grid-template-rows:1fr 1fr;gap:var(--sp-3);min-height:340px}
+.b-main{grid-row:1 / 3;position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;gap:var(--sp-3);padding:var(--sp-4);background:linear-gradient(200deg,rgba(255,255,255,.07) 0%,rgba(61,107,245,.12) 55%,rgba(61,107,245,.32) 100%)}
+.orb{position:absolute;left:50%;top:19%;width:50%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:46% 54% 52% 48% / 50% 44% 56% 50%;background:
+  radial-gradient(circle at 30% 28%,rgba(255,255,255,.95) 0 6%,transparent 20%),
+  radial-gradient(circle at 70% 75%,#7c5cff 0%,transparent 55%),
+  radial-gradient(circle at 35% 40%,#6fd6ff 0%,#3d6bf5 45%,#1a2a78 80%);
+  box-shadow:0 20px 50px -10px rgba(61,107,245,.7),inset -10px -14px 30px rgba(10,20,70,.55),inset 8px 10px 24px rgba(255,255,255,.25);animation:orbFloat 7s ease-in-out infinite}
+@keyframes orbFloat{0%,100%{transform:translate(-50%,-50%) rotate(0deg)}50%{transform:translate(-50%,-56%) rotate(8deg)}}
+.b-main h3{font-family:var(--f-body);font-size:var(--fs-lg);font-weight:600;line-height:1.2;position:relative}
+.b-main p{font-size:var(--fs-sm);color:var(--muted);position:relative}
+.b-btn{position:relative;height:46px;border:0;border-radius:14px;background:var(--ink);color:var(--canvas);font-weight:600;font-size:var(--fs-base);transition:transform var(--t-fast),background-color var(--t-fast)}
+.b-btn:hover{background:#fff}
+.b-btn:active{transform:scale(.97)}
+.b-small{display:flex;flex-direction:column;justify-content:space-between;gap:var(--sp-3);padding:var(--sp-4);text-align:left;color:var(--ink);transition:transform var(--t) var(--ease-out),border-color var(--t),background-color var(--t)}
+.b-small:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.2)}
+.b-small:active{transform:scale(.98)}
+.b-ic{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.04)}
+.b-foot{display:flex;justify-content:space-between;align-items:flex-end;gap:var(--sp-2)}
+.b-foot b{font-weight:600;font-size:var(--fs-base);line-height:1.25}
+.b-foot .arr{font-size:20px;line-height:1;transition:transform var(--t) var(--ease-out)}
+.b-small:hover .arr{transform:translateX(3px)}
+.chips{display:flex;gap:var(--sp-2);overflow-x:auto;scrollbar-width:none;margin:0 calc(max(var(--gutter-l),20px) * -1);padding:2px max(var(--gutter-l),20px)}
+.chips::-webkit-scrollbar{display:none}
+.chips button{flex:none;height:42px;padding:0 18px;border-radius:999px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:var(--ink-soft);font-size:var(--fs-sm);transition:background-color var(--t-fast),border-color var(--t-fast),color var(--t-fast)}
+.chips button:hover{border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
+.home3 .qboard{background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.015));border-color:rgba(255,255,255,.1);border-radius:20px}
+.home3 .qboard-rows li + li,.home3 .qboard-cols{border-color:rgba(255,255,255,.07)}
+.h3-note{display:flex;gap:var(--sp-3);align-items:flex-start;padding:var(--sp-4);font-size:var(--fs-sm);color:var(--ink-soft)}
+.h3-note .ico{flex:none;width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700;font-size:var(--fs-xs)}
+.h3-info{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-3)}
+.h3-info div{padding:var(--sp-3) var(--sp-4);display:flex;flex-direction:column;gap:2px;font-size:var(--fs-sm);min-width:0}
+.h3-info dt{font-size:var(--fs-xs);color:var(--subtle)}
+.h3-info dd b{display:block;font-size:var(--fs-base)}
+.h3-info dd span{color:var(--muted)}
+@media (max-width:520px){.h3-info{grid-template-columns:1fr}}
+@media (max-width:380px){.bento{grid-template-columns:1fr 1fr;min-height:310px}.b-main h3{font-size:var(--fs-md)}}
+
+/* Start-card artwork: each card shows what it does */
+.b-art-main{position:absolute;left:50%;top:4%;width:88%;max-width:320px;transform:translateX(-50%);pointer-events:none}
+.b-main{background:linear-gradient(200deg,rgba(255,255,255,.07) 0%,rgba(61,107,245,.14) 50%,rgba(61,107,245,.34) 100%)}
+.b-small{position:relative;overflow:hidden}
+.b-small > .b-ic,.b-small > .b-foot{position:relative;z-index:1}
+.b-art{position:absolute;right:2%;top:5%;width:52%;max-height:62%;pointer-events:none;transition:transform var(--t-slow) var(--ease-out)}
+.b-small:hover .b-art{transform:translateY(-3px) scale(1.03)}
+.b-kiosk{background:linear-gradient(200deg,rgba(255,255,255,.06) 0%,rgba(56,189,248,.08) 55%,rgba(56,189,248,.2) 100%)}
+.b-ai{background:linear-gradient(200deg,rgba(255,255,255,.06) 0%,rgba(124,92,255,.1) 55%,rgba(124,92,255,.24) 100%)}
+.art-float{animation:artFloat 6s ease-in-out infinite}
+@keyframes artFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.art-beam{animation:artBeam 2.4s ease-in-out infinite;filter:drop-shadow(0 0 3px #6fd6ff)}
+@keyframes artBeam{0%,100%{transform:translateY(0);opacity:.2}50%{transform:translateY(30px);opacity:1}}
+.art-dot{animation:blink 1.2s infinite}
+.art-dot:nth-of-type(2){animation-delay:.15s}.art-dot:nth-of-type(3){animation-delay:.3s}
+.art-spark{transform-box:fill-box;transform-origin:center;animation:artSpark 3s ease-in-out infinite}
+@keyframes artSpark{0%,100%{transform:scale(.8);opacity:.6}50%{transform:scale(1.1);opacity:1}}
+
+/* Top-right AI assistant button: white circle, navy-blue robot, label underneath */
+.h3-bot{flex:none;display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:0;padding:0;color:var(--ink)}
+.h3-bot-circle{width:52px;height:52px;border-radius:50%;background:#fff;color:#14245c;display:grid;place-items:center;box-shadow:0 10px 24px -10px rgba(61,107,245,.8),0 0 0 4px rgba(255,255,255,.08);transition:transform var(--t) var(--ease-out),box-shadow var(--t)}
+.h3-bot-circle svg{color:#1a2f8a}
+.h3-bot:hover .h3-bot-circle{transform:translateY(-2px);box-shadow:0 14px 28px -10px rgba(61,107,245,.95),0 0 0 4px rgba(61,107,245,.25)}
+.h3-bot:active .h3-bot-circle{transform:scale(.94)}
+.h3-bot-lbl{font-size:11px;font-weight:600;white-space:nowrap;color:var(--ink-soft)}
+.h3-top{align-items:flex-start}
+.h3-q em{font-style:normal;background:linear-gradient(90deg,#a9bdf9,#5d83f7);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* Home from the sketch: logo + bot row, open headline, 2x2 cards; full black */
+.body.home{background:#000}
+.uni{display:flex;align-items:center;gap:14px;min-width:0}
+.uni-logo{width:58px;height:58px;flex:none;border-radius:50%;display:grid;place-items:center;background:#0d1322;border:1.5px solid rgba(255,255,255,.22);color:#a9bdf9;overflow:hidden}
+.uni-logo img{width:100%;height:100%;object-fit:cover}
+.uni-name{display:flex;flex-direction:column;line-height:1.2}
+.uni-name b{font-size:21px;font-weight:600;letter-spacing:-.01em}
+.uni-name span{font-size:var(--fs-sm);color:var(--subtle)}
+.h3-intro{display:flex;flex-direction:column;gap:var(--sp-2)}
+.h3-intro .h3-hi{font-size:var(--fs-sm);color:var(--muted)}
+.h3-intro{margin-top:calc(var(--sp-5) * -1)}
+.h3-intro .h3-q{margin:0;max-width:none;font-size:clamp(44px,12vw,72px);line-height:1.02;letter-spacing:-.03em}
+.h3-open{font-size:var(--fs-sm);color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+.h3-open .dot{color:var(--good)}
+.grid4{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3)}
+.grid4 .b-small{min-height:178px;justify-content:flex-end}
+.grid4 .b-art{top:8%;right:4%;width:58%;max-height:56%}
+.grid4 .b-art-phone{width:70%;right:-6%;top:0}
+.b-foot .b-txt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.b-sub{font-size:var(--fs-xs);color:var(--muted);font-weight:400}
+.b-art-phone{width:64%;top:2%;right:-4%}
+.b-ticket{background:linear-gradient(200deg,rgba(255,255,255,.06) 0%,rgba(61,107,245,.12) 55%,rgba(61,107,245,.28) 100%)}
+.b-docs{background:linear-gradient(200deg,rgba(255,255,255,.06) 0%,rgba(244,242,236,.05) 55%,rgba(244,242,236,.12) 100%)}
+.art-up{animation:artFloat 3s ease-in-out infinite}
+@media (max-width:380px){.grid4 .b-small{min-height:160px}.b-foot b{font-size:var(--fs-sm)}}
+
+/* Documents screen */
+.select{height:48px;width:100%;padding:0 var(--sp-4);border-radius:var(--r-md);border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);font:inherit;font-size:var(--fs-md)}
+.select:focus{outline:none;border-color:var(--accent);box-shadow:var(--ring)}
+.dropzone{display:flex;flex-direction:column;align-items:center;gap:var(--sp-2);padding:var(--sp-8) var(--sp-4);border:1.5px dashed var(--line-strong);border-radius:var(--r-lg);text-align:center;color:var(--accent-text);cursor:pointer;transition:border-color var(--t-fast),background-color var(--t-fast)}
+.dropzone b{color:var(--ink)}
+.dropzone:hover,.dropzone.over{border-color:var(--accent);background:var(--accent-soft)}
+#docList .doc{gap:var(--sp-3)}
+#docList .dn{display:flex;flex-direction:column;min-width:0;flex:1}
+#docList .dn b{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#docList .rm{flex:none;width:32px;height:32px;border-radius:var(--r-md);border:1px solid var(--line);background:none;color:var(--muted);transition:color var(--t-fast),border-color var(--t-fast)}
+#docList .rm:hover{color:var(--bad);border-color:var(--bad)}
+
+/* Home cards are flat: one solid fill and a hairline border, no glows or tinted gradients */
+.grid4 .b-small{background:#0e1016!important;backdrop-filter:none;-webkit-backdrop-filter:none}
+.grid4 .b-small:hover{background:#13161e!important}
+.art-beam{filter:none}
+
+/* Robot in the assistant circle: bobs, looks around, blinks, antenna sways */
+.h3-bot-circle .robot{overflow:visible;animation:rbBob 3.2s ease-in-out infinite}
+.rb-ant{transform-box:view-box;transform-origin:12px 7px;animation:rbAnt 2.6s ease-in-out infinite}
+.rb-eyes{animation:rbLook 5s ease-in-out infinite}
+.rb-eye{transform-box:fill-box;transform-origin:center;animation:rbBlink 4.2s infinite}
+@keyframes rbBob{0%,100%{transform:translateY(1px) rotate(-3deg)}50%{transform:translateY(-2px) rotate(3deg)}}
+@keyframes rbAnt{0%,100%{transform:rotate(-14deg)}50%{transform:rotate(14deg)}}
+@keyframes rbLook{0%,30%{transform:translateX(0)}38%,55%{transform:translateX(1.3px)}63%,80%{transform:translateX(-1.3px)}88%,100%{transform:translateX(0)}}
+@keyframes rbBlink{0%,90%,100%{transform:scaleY(1)}94%{transform:scaleY(.1)}}
+.h3-bot:hover .robot{animation-duration:1.1s}
+
+/* Menu button and dropdown beside the assistant */
+.h3-actions{display:flex;align-items:flex-start;gap:var(--sp-4)}
+.h3-menu-wrap{position:relative}
+.h3-menu-circle{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:#0e1016;border:1.5px solid rgba(255,255,255,.18);color:var(--ink);font-weight:600;font-size:var(--fs-base);transition:border-color var(--t-fast),background-color var(--t-fast),transform var(--t) var(--ease-out)}
+.h3-bot:hover .h3-menu-circle{border-color:rgba(255,255,255,.4);transform:translateY(-2px)}
+#menuBtn[aria-expanded="true"] .h3-menu-circle{border-color:var(--accent);background:#121a33}
+.h3-bot-lbl .chev{vertical-align:middle;margin-left:2px;transition:transform var(--t) var(--ease-out)}
+#menuBtn[aria-expanded="true"] .chev{transform:rotate(180deg)}
+.h3-menu{position:absolute;right:0;top:calc(100% + 8px);width:240px;z-index:20;background:#11141b;border:1px solid #2c3240;border-radius:12px;overflow:hidden;animation:menuIn .16s var(--ease-out);text-align:left}
+@keyframes menuIn{from{transform:translateY(-6px)}}
+.h3-menu .mh{display:flex;flex-direction:column;gap:2px;padding:12px 14px}
+.h3-menu .mh b{font-size:var(--fs-base);font-weight:600}
+.h3-menu .mh span{font-size:var(--fs-xs);color:var(--subtle)}
+.h3-menu .mi{display:flex;align-items:center;gap:10px;width:100%;height:44px;padding:0 14px;border:0;border-top:1px solid #1f2430;background:none;color:var(--ink-soft);font-size:var(--fs-sm);text-align:left;transition:background-color var(--t-fast),color var(--t-fast)}
+.h3-menu .mi svg{flex:none;color:var(--subtle);transition:color var(--t-fast)}
+.h3-menu .mi:hover,.h3-menu .mi:focus-visible{background:#161a23;color:var(--ink);outline:none}
+.h3-menu .mi:hover svg,.h3-menu .mi:focus-visible svg{color:var(--accent-text)}
+.h3-menu .mi em{margin-left:auto;font-style:normal;font-size:var(--fs-xs);color:var(--accent-text)}
+.h3-menu .mi.danger,.h3-menu .mi.danger svg{color:var(--bad)}
+@media (max-width:420px){.h3-actions{gap:var(--sp-3)}.h3-menu{width:220px}.uni{gap:10px}.uni-logo{width:46px;height:46px}.uni-name b{font-size:18px}.uni-name span{font-size:var(--fs-xs);white-space:nowrap}.h3-bot-circle,.h3-menu-circle{width:46px;height:46px}}
+
+/* Live queues page */
+.q-sum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden}
+.q-sum div{padding:var(--sp-4);display:flex;flex-direction:column;gap:2px}
+.q-sum div + div{border-left:1px solid var(--line)}
+.q-sum dt{font-size:var(--fs-xs);color:var(--subtle)}
+.q-sum dd{font-size:var(--fs-xl);font-weight:500;letter-spacing:-.02em}
+.q-quiet{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);border:1px solid var(--accent-line);background:var(--accent-soft);border-radius:var(--r-md);font-size:var(--fs-sm)}
+.q-quiet .ico{flex:none;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center}
+.q-quiet b{color:var(--ink)}
+.q-sec{display:flex;flex-direction:column;gap:var(--sp-3)}
+.q-sec h3{font-size:var(--fs-md)}
+.hours{display:grid;grid-template-columns:repeat(8,1fr);gap:var(--sp-2);align-items:end;height:120px;padding:var(--sp-3) var(--sp-3) 0;border:1px solid var(--line);border-radius:var(--r-lg)}
+.hb{display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.hb i{display:block;flex:none;width:100%;max-width:28px;border-radius:4px 4px 0 0;background:var(--ink-700)}
+.hb span{font-family:var(--f-mono);font-size:var(--fs-xs);color:var(--subtle);padding-bottom:var(--sp-2)}
+.hb.now i{background:var(--accent)}
+.hb.now span{color:var(--accent-text);font-weight:600}
+.q-key{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:var(--fs-sm);color:var(--muted)}
+.q-key b{color:var(--ink-soft);font-weight:500}
+#s-queues .qboard{background:#0e1016}
+
+#scanTp svg{flex:none}
+/* ===== Responsive: laptop layouts (phones keep the single column above) ===== */
+@media (min-width:960px){
+  /* footer actions sit on the right instead of spanning the whole width */
+  .foot{flex-direction:row-reverse;justify-content:flex-start;align-items:center;gap:var(--sp-3)}
+  .foot .btn{width:auto;min-width:260px}
+  .foot .btn-text{min-width:0}
+  .screen .body{display:grid;grid-template-columns:minmax(0,1fr);align-content:start}
+
+  /* Home: headline beside the four cards, then questions and info full width */
+  .home3{max-width:1160px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);column-gap:var(--sp-12);row-gap:var(--sp-8);padding-top:var(--sp-5);padding-bottom:var(--sp-12)}
+  .home3 > .h3-top{grid-column:1 / -1}
+  .home3 > .h3-intro{grid-column:1;align-self:center;margin-top:0}
+  .home3 > section:nth-of-type(1){grid-column:2}
+  .home3 > section:nth-of-type(n+2){grid-column:1 / -1}
+  .h3-intro .h3-q{font-size:clamp(52px,5.6vw,80px)}
+  .grid4 .b-small{min-height:210px}
+  .chips{flex-wrap:wrap;overflow:visible;margin:0;padding:0}
+
+  /* Scan screens: card on the left, instructions on the right */
+  #s-login,#s-kiosk{--col:960px}
+  #s-login .body{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);column-gap:var(--sp-8)}
+  #s-login .body > .scanner{grid-column:1;grid-row:1 / span 4}
+  #s-login .body > :not(.scanner){grid-column:2}
+  #kiosk-scan{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);column-gap:var(--sp-8);align-content:start}
+  #kiosk-scan > .scanner{grid-row:1 / span 3}
+
+  /* Services: a wider list */
+  #s-services{--col:760px}
+
+  /* Ticket: ticket on the left, live progress on the right */
+  #s-ticket{--col:1000px}
+  #s-ticket .body{grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:var(--sp-8)}
+  #s-ticket .body > .ticket{grid-column:1;grid-row:1 / span 5;align-self:start}
+  #s-ticket .body > :not(.ticket){grid-column:2}
+
+  /* Check-in: QR on the left, status on the right */
+  #s-checkin{--col:860px}
+  #s-checkin .body{grid-template-columns:auto minmax(0,1fr);column-gap:var(--sp-8);align-items:center}
+  #s-checkin .body > .qr-box{grid-column:1;grid-row:1 / span 3}
+  #s-checkin .body > :not(.qr-box){grid-column:2}
+  #s-checkin .qr-num{text-align:left}
+
+  /* Live queues: board on the left, context on the right */
+  #s-queues{--col:1120px}
+  #s-queues .body{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);column-gap:var(--sp-8)}
+  #s-queues .body > :is(.q-sum,.q-quiet,.qboard){grid-column:1}
+  #s-queues .body > .q-sec{grid-column:2}
+  #s-queues .body > .q-sec:first-of-type{grid-row:1 / span 3}
+
+  /* Documents: upload on the left, your files on the right */
+  #s-docs{--col:820px}
+  #docsScan{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);column-gap:var(--sp-8);align-items:start}
+  #docsScan > .scanner{grid-column:1;grid-row:1 / span 3}
+  #docsScan > :not(.scanner){grid-column:2}
+  #docsForm{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--sp-4) var(--sp-8);align-items:start}
+  #docsForm > .d-who,#docsForm > .err{grid-column:1 / -1}
+  #docsSent{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--sp-4) var(--sp-8);align-items:start}
+  #docsSent > .d-head{grid-column:1 / -1}
+
+  /* Session notes: summary across the top, sections in two columns */
+  #s-service{--col:1000px}
+  #s-service .body{grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:var(--sp-8)}
+  #s-service .body > .sess-head,#s-service .body > p{grid-column:1 / -1}
+
+  /* Done: stats a little wider */
+  #s-done{--col:680px}
+}
+@media (min-width:960px) and (max-height:700px){.grid4 .b-small{min-height:170px}}
+
+/* ===== Laptop: bigger type and wider screens so pages fill the window ===== */
+@media (min-width:960px){
+  :root{--fs-2xs:12px;--fs-xs:14px;--fs-sm:15px;--fs-base:17px;--fs-md:18px;--fs-lg:24px;--fs-xl:28px;--fs-2xl:38px;--fs-3xl:52px;--fs-num:76px;--tap:48px}
+  .topbar{min-height:72px}
+  .topbar h2{font-size:28px}
+  .btn{min-height:56px;font-size:var(--fs-md)}
+  .foot .btn{min-width:320px}
+  .field input{height:54px}
+  .body{padding-top:var(--sp-8);gap:var(--sp-7,28px)}
+  /* grid rows were squashing boxes with hidden overflow (e.g. the live queue board showed one row) */
+  .screen .body > :not(.d-pane){min-height:max-content}
+  /* documents form: service + note on the left, files + consent on the right */
+  #docsForm{grid-template-rows:auto auto 1fr auto}
+  #docsForm > .field:nth-child(2){grid-column:1;grid-row:2}
+  #docsForm > .field:nth-child(3){grid-column:2;grid-row:2 / span 2}
+  #docsForm > .field:nth-child(4){grid-column:1;grid-row:3;display:flex;flex-direction:column}
+  #docsForm > .field:nth-child(4) textarea{flex:1;min-height:200px}
+  #docsForm > .consent{grid-column:2;grid-row:4}
+  #docsForm > .err{grid-column:1;grid-row:4}
+
+  /* scan screens: the card frame takes most of the window */
+  #s-login,#s-kiosk{--col:1400px}
+  #s-docs{--col:1200px}
+  #s-login .body,#kiosk-scan,#docsScan{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);column-gap:var(--sp-10,40px);align-items:start}
+  .scanner{width:100%;max-height:calc(100vh - 230px);margin:0 auto;aspect-ratio:1.4}
+  #kiosk-scan{grid-template-rows:auto auto 1fr}
+  #kiosk-scan > :not(.scanner){align-self:start}
+  .scanner::before{inset:7%}
+  .card-id{width:78%;padding:var(--sp-5);font-size:16px;border-radius:var(--r-lg)}
+  .card-id b{font-size:20px}
+  .scanner .scan-photo{inset:4%;width:92%;height:92%}
+  .scan-ok,.scan-err{font-size:var(--fs-md);padding:10px 14px}
+  #s-login .body > :not(.scanner),#kiosk-scan > :not(.scanner),#docsScan > :not(.scanner){font-size:var(--fs-md)}
+
+  /* other screens a bit wider to match */
+  #s-services{--col:900px}
+  #s-ticket{--col:1200px}
+  #s-checkin{--col:1040px}
+  #s-queues{--col:1320px}
+  #s-service{--col:1200px}
+  #s-done{--col:820px}
+  .home3{max-width:1320px}
+
+  /* Services: cards in a grid instead of a narrow list */
+  #s-services{--col:1280px}
+  #svcList{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));grid-auto-rows:minmax(min(230px,calc((100vh - 330px) / 2)),auto);gap:var(--sp-4);border:0!important;background:none!important;overflow:visible;border-radius:0}
+  #svcList .svc{border:1px solid var(--line)!important;border-radius:var(--r-lg);background:var(--surface);padding:var(--sp-6) calc(var(--sp-6) + 34px) var(--sp-6) var(--sp-6);min-height:150px;align-items:flex-start}
+  #svcList .svc{grid-column:span 2}
+  #svcList .svc:nth-child(n+4):nth-last-child(-n+2){grid-column:span 3}
+  #svcList .svc .sub{font-size:var(--fs-base);display:block;margin-top:var(--sp-2)}
+  #svcList .svc:hover{border-color:var(--line-strong)!important}
+  #svcList .svc[aria-pressed="true"]{border-color:var(--accent)!important;background:var(--accent-soft)}
+  #svcList .svc::after{top:var(--sp-6);margin-top:0;right:var(--sp-5);width:22px;height:22px}
+  #svcList .svc .code{width:52px;height:52px;font-size:var(--fs-md)}
+  #svcList .svc .name{font-size:var(--fs-lg)}
+  #svcList .svc .wait{position:absolute;right:var(--sp-5);bottom:var(--sp-5);font-size:var(--fs-lg)}
+
+  /* Ticket: a bigger ticket that fills the left side */
+  #s-ticket .body{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);column-gap:var(--sp-10,40px)}
+  .ticket .top{padding:var(--sp-8) var(--sp-8) var(--sp-6)}
+  .ticket .num{font-size:clamp(96px,9vw,150px)}
+  .ticket .perf{margin:0 var(--sp-8)}
+  .ticket .bottom{padding:var(--sp-6) var(--sp-8) var(--sp-8)}
+  .ticket .bottom b{font-size:40px}
+  .ticket::before,.ticket::after{width:28px;height:28px}
+  .ticket::before{left:-14px}.ticket::after{right:-14px}
+  #s-ticket .body > .ticket{min-height:calc(100vh - 300px);display:flex;flex-direction:column}
+  .ticket .top{flex:1;justify-content:center}
+  #s-ticket .body > :not(.ticket){font-size:var(--fs-md)}
+  #s-ticket .board{padding:var(--sp-6) var(--sp-6);font-size:var(--fs-lg)}
+  #s-ticket .board b{font-size:44px}
+  .progress{height:10px}
+  .feed{font-size:var(--fs-base)}
+  .feed .t{font-size:var(--fs-sm)}
+
+  /* Check-in: a bigger QR code */
+  .qr-box{padding:var(--sp-8)}
+  .qr-box canvas{width:clamp(280px,30vw,420px);height:clamp(280px,30vw,420px)}
+  .qr-num{font-size:40px}
+
+  /* Called: a large call-out */
+  #s-called{--col:1000px}
+  .callout{padding:var(--sp-10,40px);gap:var(--sp-3)}
+  .callout .big{font-size:clamp(72px,8vw,120px)}
+
+  /* Live queues: taller rows and bigger numbers */
+  .qboard-cols,.qboard-rows li{grid-template-columns:44px minmax(0,1fr) 110px 90px 70px;padding:0 var(--sp-6)}
+  .qboard-cols{height:44px}
+  .qboard-rows li{min-height:72px;font-size:var(--fs-md)}
+  .q-sum div{padding:var(--sp-6)}
+  .q-sum dd{font-size:44px}
+  .hours{height:200px}
+
+  /* Documents: a larger drop area */
+  .dropzone{padding:var(--sp-12,48px) var(--sp-6);min-height:260px;justify-content:center}
+
+  /* Session notes and done */
+  .sess-head{padding:var(--sp-8)}
+  .done-mark{width:96px;height:96px}
+  .stars button{font-size:44px}
+}
+
+/* Send documents: steps, note box, confirmation */
+.d-steps{display:flex;gap:var(--sp-2);margin:0;padding:0;list-style:none;counter-reset:d}
+.d-steps li{flex:1;display:flex;align-items:center;gap:8px;padding-top:var(--sp-2);border-top:3px solid var(--line);font-size:var(--fs-xs);color:var(--subtle);counter-increment:d}
+.d-steps li::before{content:counter(d);width:20px;height:20px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--line-strong);font-family:var(--f-mono);font-size:11px}
+.d-steps li.on{border-top-color:var(--accent);color:var(--ink)}
+.d-steps li.on::before{border-color:var(--accent);color:var(--accent-text)}
+.d-steps li.ok{border-top-color:var(--accent);color:var(--muted)}
+.d-steps li.ok::before{content:"✓";background:var(--accent);border-color:var(--accent);color:#fff}
+.d-pane{display:flex;flex-direction:column;gap:var(--sp-4)}
+.d-who{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-3);flex-wrap:wrap;padding:var(--sp-3) var(--sp-4);border:1px solid var(--line);border-radius:var(--r-md);font-size:var(--fs-sm);color:var(--muted)}
+.d-who b{color:var(--ink)}
+.d-who .btn-text{min-height:0;padding:0;font-size:var(--fs-sm);color:var(--accent-text);width:auto}
+.f-label{font-size:var(--fs-sm);font-weight:500;color:var(--ink-soft)}
+.textarea{width:100%;min-height:110px;padding:var(--sp-3) var(--sp-4);border-radius:var(--r-md);border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);font:inherit;font-size:var(--fs-base);line-height:1.5;resize:vertical;transition:border-color var(--t-fast),box-shadow var(--t-fast)}
+.textarea::placeholder{color:var(--subtle)}
+.textarea:hover{border-color:var(--disabled)}
+.textarea:focus{outline:none;border-color:var(--accent);box-shadow:var(--ring)}
+.textarea[aria-invalid="true"]{border-color:var(--bad)}
+.d-count{align-self:flex-end}
+.d-done{align-items:center;text-align:center;padding-top:var(--sp-4)}
+.d-done h3{font-size:var(--fs-xl)}
+.d-sum{width:100%;text-align:left;border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;margin:0}
+.d-sum div{display:grid;grid-template-columns:110px minmax(0,1fr);gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);font-size:var(--fs-sm)}
+.d-sum div + div{border-top:1px solid var(--line)}
+.d-sum dt{color:var(--subtle)}
+.d-sum dd{color:var(--ink-soft);overflow-wrap:anywhere}
+
+/* Documents: sent, review, done */
+.d-steps li{font-size:11px;gap:6px}
+.d-head{display:flex;gap:var(--sp-3);align-items:flex-start}
+.d-head h3{font-size:var(--fs-lg)}
+.d-tick{flex:none;width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center}
+.d-eta{display:flex;flex-direction:column;gap:var(--sp-2);padding:var(--sp-4);border:1px solid var(--accent-line);background:var(--accent-soft);border-radius:var(--r-lg)}
+.d-eta b{font-size:var(--fs-md)}
+.d-eta .progress::after{display:none}
+.d-wait,.d-reply{display:flex;flex-direction:column;gap:var(--sp-3);padding:var(--sp-4);border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface)}
+.d-officer{display:flex;gap:var(--sp-3);align-items:center}
+.d-officer div{display:flex;flex-direction:column}
+.d-status{display:flex;align-items:center;gap:var(--sp-2);color:var(--ink-soft)}
+.d-msg{font-size:var(--fs-base);line-height:1.6;color:var(--ink-soft);white-space:pre-line}
+.d-reply{animation:feedIn .3s var(--ease-out)}
+#docRepStepsWrap{display:flex;flex-direction:column;gap:var(--sp-2)}
+.d-done .btn{width:auto;min-width:220px}
+
+/* Office rules, notifications, privacy, accessibility */
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.link{background:none;border:0;padding:0;font:inherit;color:var(--accent-text);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.link:hover{color:var(--ink)}
+.h3-open.closed .dot{color:var(--subtle);animation:none}
+.h3-closed{display:flex;flex-direction:column;gap:4px;align-items:flex-start;padding:var(--sp-3) var(--sp-4);border:1px solid var(--line-strong);border-radius:var(--r-md);background:#0e1016;max-width:520px}
+.h3-closed .link{font-size:var(--fs-sm);margin-top:4px}
+.priv-line{margin-top:var(--sp-1)}
+.step.bad{color:var(--ink)}
+.step.bad .ck{background:var(--bad);border-color:var(--bad);color:#fff}
+.block-msg{background:var(--bad-soft);border-color:color-mix(in srgb,var(--bad) 40%,transparent)}
+.block-msg .ico{background:var(--bad)}
+.svc[disabled]{opacity:.55;cursor:not-allowed}
+.svc[disabled]:hover{background:transparent}
+.svc .wait.full{color:var(--bad);font-weight:600}
+.ns{display:block;font-size:var(--fs-sm);color:var(--ink-soft);padding:var(--sp-3) var(--sp-4);border:1px solid var(--line);border-radius:var(--r-md)}
+.ns b{font-family:var(--f-mono);color:var(--ink)}
+.ns.low{border-color:var(--bad);color:var(--bad)}
+.callout.missed{background:var(--bad-soft);border:1px solid var(--bad);color:var(--ink)}
+.callout.missed .eyebrow::before{display:none}
+.consent{display:flex;gap:var(--sp-3);align-items:flex-start;font-size:var(--fs-sm);color:var(--ink-soft);cursor:pointer}
+.consent input{appearance:none;-webkit-appearance:none;width:20px;height:20px;flex:none;margin:1px 0 0;border:1.5px solid var(--disabled);border-radius:var(--r-xs);display:grid;place-items:center;cursor:pointer}
+.consent input::after{content:"";width:9px;height:5px;border:2px solid #fff;border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px);opacity:0}
+.consent input:checked{background:var(--accent);border-color:var(--accent)}
+.consent input:checked::after{opacity:1}
+.consent input[aria-invalid="true"]{border-color:var(--bad)}
+.toggles{border:1px solid var(--line);border-radius:var(--r-lg);padding:0;margin:0;overflow:hidden}
+.toggles legend{padding:0 var(--sp-4);margin-bottom:var(--sp-2);float:left;width:100%;padding-top:var(--sp-3)}
+.tg{clear:both;display:flex;justify-content:space-between;align-items:center;gap:var(--sp-4);padding:var(--sp-3) var(--sp-4);border-top:1px solid var(--line);cursor:pointer}
+.tg > span{display:flex;flex-direction:column;gap:2px}
+.tg b{font-weight:500}
+.tg input{appearance:none;-webkit-appearance:none;flex:none;width:44px;height:26px;border-radius:999px;background:var(--ink-700);border:1px solid var(--line-strong);position:relative;cursor:pointer;transition:background-color var(--t-fast)}
+.tg input::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--muted);transition:transform var(--t) var(--ease-out),background-color var(--t-fast)}
+.tg input:checked{background:var(--accent);border-color:var(--accent)}
+.tg input:checked::after{transform:translateX(18px);background:#fff}
+.prose section{display:flex;flex-direction:column;gap:var(--sp-2)}
+.prose h3{font-size:var(--fs-md)}
+.prose p{color:var(--ink-soft);line-height:1.6}
+.d-who .btn-text{min-height:var(--tap)}
+.dropzone:focus-visible{outline:2px solid var(--accent-hover);outline-offset:2px}
+@media (min-width:960px){#s-privacy{--col:760px}#s-settings{--col:680px}}
+
+/* Scanned card photo shown in the scanner frame */
+.scanner .scan-photo{position:absolute;inset:7%;width:86%;height:86%;object-fit:contain;border-radius:var(--r-md);z-index:1;animation:feedIn .3s var(--ease-out)}
+.scanner.has-photo .card-id{display:none}
+.scanner.has-photo::before{z-index:2;border-color:rgba(255,255,255,.35)}
+.scanner .scanline{z-index:3}
+.scanner .scan-ok,.scanner .scan-err{z-index:4}
+.scanner.scan-good{border-color:var(--good)}
+.scanner.scan-bad{border-color:var(--bad)}
+#scanBox img,#docScanBox img{display:none}
+.who-l{display:flex;align-items:center;gap:var(--sp-3)}
+.who-card{width:56px;height:36px;object-fit:cover;border-radius:var(--r-xs);border:1px solid var(--line-strong);flex:none}
+
+/* "Are you sure?" dialog and retract */
+.cf-scrim{position:fixed;inset:0;z-index:50;background:var(--overlay)}
+.cf{position:fixed;z-index:51;left:50%;top:50%;transform:translate(-50%,-50%);width:min(440px,calc(100% - 32px));max-height:calc(100% - 32px);overflow:auto;display:flex;flex-direction:column;gap:var(--sp-3);padding:var(--sp-5);background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-lg);animation:feedIn .18s var(--ease-out)}
+.cf h3{font-size:var(--fs-lg)}
+.cf .d-sum div{grid-template-columns:72px minmax(0,1fr)}
+.cf-btns{display:flex;gap:var(--sp-2);margin-top:var(--sp-2)}
+.cf-btns .btn{flex:1;width:auto;min-width:0}
+.btn-danger{background:var(--bad);color:#fff}
+.btn-danger:hover{background:color-mix(in srgb,var(--bad) 85%,#fff)}
+@media (max-width:560px){.cf{top:auto;bottom:0;transform:translateX(-50%);width:100%;max-width:none;border-radius:var(--r-lg) var(--r-lg) 0 0;padding-bottom:calc(var(--sp-5) + env(safe-area-inset-bottom,0px))}.cf-btns{flex-direction:column-reverse}}
+.d-retract{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 40%,transparent)}
+.d-retract:hover:not([disabled]){background:var(--bad-soft);border-color:var(--bad)}
+
+/* Buttons are flat: no shadows or glows (the notification banner keeps its shadow) */
+button:not(.push),button:not(.push) *{box-shadow:none!important}
+
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+
+    <div class="screen-wrap" id="app">
+
+      <div class="sr-only" id="srLive" aria-live="polite" aria-atomic="true"></div>
+      <button class="push" id="push" type="button">
+        <span class="logo">AP</span>
+        <span class="push-body">
+          <span class="push-app"><span>APADMIN · Student Admin Office</span><span id="pushTime">now</span></span>
+          <b id="pushTitle">Your turn is approaching</b>
+          <p id="pushText">Please make your way to your counter.</p>
+        </span>
+      </button>
+
+      <!-- AI assistant chat -->
+      <div class="bot-scrim" id="botScrim"></div>
+      <aside class="bot" id="bot" role="dialog" aria-modal="true" aria-labelledby="botTitle">
+        <div class="bot-head">
+          <span class="bot-av"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7V4"/><circle cx="12" cy="3" r="1" fill="currentColor"/><rect x="4" y="7" width="16" height="12" rx="4"/><circle cx="9" cy="12.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="15" cy="12.5" r="1.3" fill="currentColor" stroke="none"/><path d="M10 16h4"/></svg></span>
+          <span class="bot-name"><b id="botTitle">APAdmin Assistant</b><span class="bot-status live"><span class="dot"></span><span id="botStatusTxt">Online · ask me anything</span></span></span>
+          <button class="x" id="botClose" type="button" aria-label="Close assistant">✕</button>
+        </div>
+        <div class="bot-msgs" id="botMsgs" aria-live="polite"></div>
+        <form class="bot-form" id="botForm" autocomplete="off">
+          <input id="botIn" placeholder="Type your question…" maxlength="500" aria-label="Your question">
+          <button type="submit" id="botSend" aria-label="Send" disabled><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        </form>
+      </aside>
+
+      <!-- B/C: welcome -->
+      <section class="screen" id="s-welcome">
+        <div class="body home">
+          <div class="home3">
+            <div class="h3-top">
+              <div class="uni">
+                <span class="uni-logo" id="uniLogo" role="img" aria-label="University logo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c2 2 10 2 12 0v-5"/><path d="M22 9v6"/></svg></span>
+                <span class="uni-name"><b>APAdmin</b><span>Student Admin Office</span></span>
+              </div>
+              <div class="h3-actions">
+                <button class="h3-bot" id="botOpen" type="button" aria-haspopup="dialog" aria-controls="bot">
+                  <span class="h3-bot-circle"><svg class="robot" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g class="rb-ant"><path d="M12 7V4"/><circle cx="12" cy="3" r="1" fill="currentColor"/></g><rect x="4" y="7" width="16" height="12" rx="4"/><path d="M2 12v3M22 12v3"/><g class="rb-eyes"><circle class="rb-eye" cx="9" cy="12.5" r="1.3" fill="currentColor" stroke="none"/><circle class="rb-eye" cx="15" cy="12.5" r="1.3" fill="currentColor" stroke="none"/></g><path class="rb-mouth" d="M10 16h4"/></svg></span>
+                  <span class="h3-bot-lbl">AI assistant bot</span>
+                </button>
+                <div class="h3-menu-wrap">
+                  <button class="h3-bot" id="menuBtn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="homeMenu">
+                    <span class="h3-menu-circle" id="menuAvatar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span>
+                    <span class="h3-bot-lbl">Menu <svg class="chev" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span>
+                  </button>
+                  <div class="h3-menu" id="homeMenu" role="menu" aria-label="Menu" hidden></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="h3-intro">
+              <span class="h3-hi"><span id="hiName">Hi there</span> · <span id="greet">Good morning</span></span>
+              <h1 class="h3-q">How can we <em>help you today?</em></h1>
+              <span class="side live h3-open" id="openWrap"><span class="dot"></span><span id="openTag">Office open · closes 4:00 PM</span></span>
+              <div class="h3-closed" id="closedBanner" role="status" hidden>
+                <b id="closedTitle">The office is closed</b>
+                <span class="small" id="closedText"></span>
+                <button class="link" id="previewOpen" type="button">Preview the queue as if it's open (demo)</button>
+              </div>
+            </div>
+
+            <section class="h3-sec" aria-label="What you can do">
+              <div class="grid4">
+                <button class="glass b-small b-ticket" type="button" data-start="login" data-method="app">
+                  <svg class="b-art b-art-phone" viewBox="0 0 200 150" aria-hidden="true">
+                    <defs>
+                      <linearGradient id="artPhone" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6d90ff"/><stop offset="1" stop-color="#1b2f7a"/></linearGradient>
+                      <radialGradient id="artGlow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#3d6bf5" stop-opacity=".55"/><stop offset="1" stop-color="#3d6bf5" stop-opacity="0"/></radialGradient>
+                    </defs>
+                    
+                    <g class="art-float">
+                      <g transform="rotate(-9 92 78)">
+                        <rect x="56" y="10" width="74" height="132" rx="14" fill="url(#artPhone)" stroke="rgba(255,255,255,.4)"/>
+                        <rect x="62" y="17" width="62" height="118" rx="9" fill="#0b1433"/>
+                        <rect x="84" y="21" width="18" height="4" rx="2" fill="#1f2f5e"/>
+                        <rect x="70" y="34" width="30" height="4" rx="2" fill="#a9bdf9" opacity=".7"/>
+                        <rect x="70" y="42" width="44" height="4" rx="2" fill="#a9bdf9" opacity=".35"/>
+                        <rect x="70" y="112" width="46" height="5" rx="2.5" fill="#1f2f5e"/>
+                        <rect x="70" y="112" width="33" height="5" rx="2.5" fill="#6fd6ff"/>
+                        <rect x="70" y="122" width="46" height="7" rx="3.5" fill="#3d6bf5"/>
+                      </g>
+                      <g transform="rotate(7 140 76)">
+                        <rect x="100" y="52" width="86" height="50" rx="6" fill="#f4f2ec"/>
+                        <text x="109" y="64" font-family="IBM Plex Mono, monospace" font-size="6" letter-spacing=".6" fill="#5e6372">YOUR TICKET</text>
+                        <text x="108" y="83" font-family="IBM Plex Mono, monospace" font-size="17" font-weight="600" fill="#14161c">FP-047</text>
+                        <line x1="106" y1="90" x2="180" y2="90" stroke="#d9d5ca" stroke-width="1.2" stroke-dasharray="3 3"/>
+                        <text x="109" y="98" font-family="IBM Plex Mono, monospace" font-size="5.5" fill="#5e6372">3 AHEAD · COUNTER 3</text>
+                      </g>
+                      <g transform="translate(10 22)">
+                        <rect width="66" height="22" rx="11" fill="rgba(255,255,255,.14)" stroke="rgba(255,255,255,.3)"/>
+                        <circle cx="12" cy="11" r="4" fill="#6cc79b"/>
+                        <text x="21" y="14.5" font-family="IBM Plex Sans, sans-serif" font-size="9" font-weight="600" fill="#ffffff">Nearly you</text>
+                      </g>
+                    </g>
+                  </svg>
+                  <span class="b-foot"><span class="b-txt"><b>Ticket on your phone</b><span class="b-sub">Wait anywhere, get alerted</span></span><span class="arr" aria-hidden="true">→</span></span>
+                </button>
+                <button class="glass b-small b-kiosk" type="button" data-start="kiosk" data-method="kiosk">
+                  <svg class="b-art" viewBox="0 0 120 100" aria-hidden="true">
+                    <rect x="44" y="6" width="58" height="46" rx="6" fill="#16224a" stroke="rgba(255,255,255,.22)"/>
+                    <rect x="50" y="12" width="46" height="28" rx="3" fill="#3d6bf5" opacity=".6"/>
+                    <rect x="55" y="17" width="20" height="3" rx="1.5" fill="#fff" opacity=".85"/>
+                    <rect x="55" y="23" width="32" height="3" rx="1.5" fill="#fff" opacity=".45"/>
+                    <rect x="55" y="31" width="14" height="5" rx="2.5" fill="#fff" opacity=".9"/>
+                    <rect x="66" y="52" width="14" height="32" fill="#121a3a" stroke="rgba(255,255,255,.14)"/>
+                    <rect x="52" y="84" width="42" height="7" rx="3.5" fill="#16224a" stroke="rgba(255,255,255,.14)"/>
+                    <g class="art-scan" transform="rotate(-14 30 62)">
+                      <rect x="6" y="50" width="46" height="29" rx="4" fill="#f4f2ec"/>
+                      <rect x="11" y="56" width="11" height="13" rx="2" fill="#a9bdf9"/>
+                      <rect x="26" y="57" width="20" height="2.5" rx="1" fill="#14161c" opacity=".6"/>
+                      <rect x="26" y="62" width="14" height="2.5" rx="1" fill="#14161c" opacity=".35"/>
+                      <text x="11" y="75" font-family="IBM Plex Mono, monospace" font-size="4.6" fill="#14161c">TP101189</text>
+                    </g>
+                    <line class="art-beam" x1="2" y1="46" x2="58" y2="46" stroke="#6fd6ff" stroke-width="1.6" stroke-linecap="round"/>
+                  </svg>
+                  <span class="b-foot"><span class="b-txt"><b>Lobby kiosk</b><span class="b-sub">Scan your card in person</span></span><span class="arr" aria-hidden="true">→</span></span>
+                </button>
+                <button class="glass b-small b-ai bot-launch" type="button" >
+                  <svg class="b-art" viewBox="0 0 120 100" aria-hidden="true">
+                    <defs><linearGradient id="artBot" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7c9bff"/><stop offset="1" stop-color="#6a4dff"/></linearGradient></defs>
+                    <path d="M44 8h56a14 14 0 0 1 0 28H62l-10 8 2-8h-10a14 14 0 0 1 0-28z" fill="url(#artBot)"/>
+                    <circle class="art-dot" cx="60" cy="22" r="3.4" fill="#fff"/>
+                    <circle class="art-dot" cx="72" cy="22" r="3.4" fill="#fff"/>
+                    <circle class="art-dot" cx="84" cy="22" r="3.4" fill="#fff"/>
+                    <path d="M28 52h46a12 12 0 0 1 0 24H40l-8 7 1-7a12 12 0 0 1-5-24z" fill="rgba(255,255,255,.1)" stroke="rgba(255,255,255,.26)"/>
+                    <rect x="36" y="60" width="30" height="3" rx="1.5" fill="#fff" opacity=".7"/>
+                    <rect x="36" y="66" width="20" height="3" rx="1.5" fill="#fff" opacity=".4"/>
+                    <path class="art-spark" d="M104 56l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" fill="#a9bdf9"/>
+                    <path class="art-spark" d="M96 84l1.6 3.4 3.4 1.6-3.4 1.6L96 94l-1.6-3.4L91 89l3.4-1.6z" fill="#fff" opacity=".7"/>
+                  </svg>
+                  <span class="b-foot"><span class="b-txt"><b>AI assistant bot</b><span class="b-sub">Ask any question</span></span><span class="arr" aria-hidden="true">→</span></span>
+                </button>
+                <button class="glass b-small b-docs docs-launch" type="button" >
+                  <svg class="b-art" viewBox="0 0 120 100" aria-hidden="true">
+                    <rect x="52" y="14" width="44" height="56" rx="5" fill="#1b2a5c" stroke="rgba(255,255,255,.18)" transform="rotate(10 74 42)"/>
+                    <rect x="44" y="10" width="44" height="56" rx="5" fill="#f4f2ec"/>
+                    <path d="M76 10v10h12" fill="#d9d5ca"/>
+                    <rect x="50" y="26" width="24" height="3" rx="1.5" fill="#14161c" opacity=".55"/>
+                    <rect x="50" y="33" width="32" height="3" rx="1.5" fill="#14161c" opacity=".3"/>
+                    <rect x="50" y="40" width="28" height="3" rx="1.5" fill="#14161c" opacity=".3"/>
+                    <rect x="50" y="52" width="16" height="7" rx="2" fill="#f2616f"/>
+                    <text x="52.5" y="57.6" font-family="IBM Plex Mono, monospace" font-size="5" font-weight="600" fill="#fff">PDF</text>
+                    <g class="art-up"><circle cx="88" cy="70" r="13" fill="#3d6bf5"/><path d="M88 76v-12M83 69l5-5 5 5" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+                  </svg>
+                  <span class="b-foot"><span class="b-txt"><b>Documents</b><span class="b-sub" id="docCount">Send forms to the admin office</span></span><span class="arr" aria-hidden="true">→</span></span>
+                </button>
+              </div>
+            </section>
+
+            <section class="h3-sec" aria-labelledby="popH">
+              <div class="h3-head"><h2 id="popH">Popular questions</h2><button class="side bot-launch" type="button">See all</button></div>
+              <div class="chips" id="homeChips"></div>
+            </section>
+
+            <section class="h3-sec" aria-labelledby="infoH">
+              <div class="h3-head"><h2 id="infoH">Before you come</h2></div>
+              <dl class="h3-info">
+                <div class="glass"><dt>Hours</dt><dd><b>Mon–Fri</b><span>8:00 AM – 4:00 PM</span></dd></div>
+                <div class="glass"><dt>Where</dt><dd><b>Admin Block</b><span>Ground floor, Hall B</span></dd></div>
+                <div class="glass"><dt>Bring</dt><dd><b>Student ID card</b><span>Plus any forms</span></dd></div>
+              </dl>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <!-- Live queues page (from the menu) -->
+      <section class="screen" id="s-queues" hidden>
+        <div class="topbar"><button class="back" data-back type="button" aria-label="Back">‹</button><h2>Live queues</h2><span class="tag good live"><span class="dot"></span>Live</span></div>
+        <div class="body">
+          <dl class="q-sum">
+            <div><dt>Waiting now</dt><dd class="mono" id="w-wait">52</dd></div>
+            <div><dt>Average wait</dt><dd class="mono" id="w-avg">21m</dd></div>
+            <div><dt>Counters open</dt><dd class="mono">5/5</dd></div>
+          </dl>
+
+          <div class="q-quiet" id="quietest"></div>
+
+          <div class="qboard">
+            <div class="qboard-cols" aria-hidden="true"><span>Ctr</span><span>Service</span><span class="c-serv">Serving</span><span class="num">Waiting</span><span class="num">Wait</span></div>
+            <ol class="qboard-rows" id="board"></ol>
+            <div class="qboard-head"><span class="small muted mono" id="boardTime">Updated now</span></div>
+          </div>
+
+          <section class="q-sec" aria-labelledby="busyH">
+            <div class="row-between"><h3 id="busyH">Usually busy</h3><span class="small muted">Typical weekday</span></div>
+            <div class="hours" id="hours"><div class="hb" data-h="8"><i style="height:22px"></i><span>8</span></div><div class="hb" data-h="9"><i style="height:40px"></i><span>9</span></div><div class="hb" data-h="10"><i style="height:58px"></i><span>10</span></div><div class="hb" data-h="11"><i style="height:68px"></i><span>11</span></div><div class="hb" data-h="12"><i style="height:65px"></i><span>12</span></div><div class="hb" data-h="13"><i style="height:43px"></i><span>1</span></div><div class="hb" data-h="14"><i style="height:50px"></i><span>2</span></div><div class="hb" data-h="15"><i style="height:32px"></i><span>3</span></div></div>
+            <p class="small muted">Quietest before 10 AM and after 2:30 PM. Lunchtime is the busiest.</p>
+          </section>
+
+          <section class="q-sec" aria-labelledby="noteH">
+            <h3 id="noteH">Notices</h3>
+            <div class="notice" role="note"><span class="ico">!</span><span><b>Fee deadline 28 November.</b> Expect longer waits for Fees &amp; Payments this week. Online payment receipts can be downloaded from the student portal.</span></div>
+          </section>
+
+          <section class="q-sec" aria-labelledby="keyH">
+            <h3 id="keyH">How to read this</h3>
+            <ul class="q-key">
+              <li><b>Serving</b> is the ticket at that counter right now.</li>
+              <li><b>Wait</b> is an estimate from the number of people waiting. Waits over 20 minutes are in bold.</li>
+              <li>We send you a phone alert when 70% of the people ahead of you have been served.</li>
+            </ul>
+          </section>
+        </div>
+        <div class="foot"><button class="btn btn-primary" id="queuesGo" type="button">Get a ticket</button></div>
+      </section>
+
+      <!-- Notification settings -->
+      <section class="screen" id="s-settings" hidden>
+        <div class="topbar"><button class="back" data-back type="button" aria-label="Back">‹</button><h2>Notifications</h2></div>
+        <div class="body">
+          <p class="muted">Choose what we tell you about. Alerts appear in the app, and by email if you add an address.</p>
+          <div class="field">
+            <label for="nEmail">Email for alerts</label>
+            <input id="nEmail" type="email" inputmode="email" autocomplete="email" placeholder="name@example.com" aria-describedby="nErr nHelp">
+            <span class="small muted" id="nHelp">Leave empty to get alerts in the app only.</span>
+          </div>
+          <fieldset class="toggles">
+            <legend class="eyebrow">Send me alerts when</legend>
+            <label class="tg"><span><b>My turn is approaching</b><span class="small muted">When 70% of the people ahead of you have been served</span></span><input type="checkbox" id="nTurn" role="switch"></label>
+            <label class="tg"><span><b>I'm called to the counter</b><span class="small muted">Including if a ticket closes because you missed your turn</span></span><input type="checkbox" id="nCalled" role="switch"></label>
+            <label class="tg"><span><b>The office replies to my documents</b><span class="small muted">Sent, reviewed and replied</span></span><input type="checkbox" id="nDocs" role="switch"></label>
+            <label class="tg"><span><b>My session notes are ready</b><span class="small muted">After you're seen at the counter</span></span><input type="checkbox" id="nNotes" role="switch"></label>
+          </fieldset>
+          <p class="err" id="nErr" role="alert"></p>
+          <p class="small muted">In this preview, alerts appear inside the app. On the live system the APAdmin server sends them, so they reach you even when the app is closed.</p>
+        </div>
+        <div class="foot"><button class="btn btn-primary" id="nSave" type="button">Save settings</button></div>
+      </section>
+
+      <!-- Privacy notice (PDPA) -->
+      <section class="screen" id="s-privacy" hidden>
+        <div class="topbar"><button class="back" data-back type="button" aria-label="Back">‹</button><h2>Privacy and your data</h2></div>
+        <div class="body prose">
+          <p class="muted">How APAdmin handles your personal data, in line with Malaysia's Personal Data Protection Act 2010 (PDPA).</p>
+          <section><h3>What we collect</h3><ul class="q-key">
+            <li>Your TP number and first name, read from your student card.</li>
+            <li>Your tickets: the service, times, and whether you were seen.</li>
+            <li>Documents you send, your note, and the office's reply.</li>
+            <li>Your email address, if you add one for alerts.</li>
+          </ul></section>
+          <section><h3>What we don't keep</h3><ul class="q-key">
+            <li>The photo of your card. It's only used to read your TP number, then discarded.</li>
+            <li>Anything you type to the AI assistant is not linked to your student record.</li>
+          </ul></section>
+          <section><h3>Why we use it</h3><p>To run the queue, call you to the right counter, handle your request, and send the alerts you chose. We don't use it for marketing.</p></section>
+          <section><h3>Who can see it</h3><p>Staff at the Student Admin Office team handling your request. Documents go only to the team you choose.</p></section>
+          <section><h3>How long we keep it</h3><ul class="q-key">
+            <li>Documents: deleted 90 days after your request is closed.</li>
+            <li>Queue history: kept for one semester for service statistics, then deleted.</li>
+          </ul></section>
+          <section><h3>Your rights</h3><p>You can ask to see the data we hold about you, correct it, or withdraw consent for future requests. Ask at General Enquiries (Counter 4) or through the AI assistant.</p></section>
+          <section><h3>Security</h3><p>Data travels over encrypted connections, uploads are checked for viruses, and only staff accounts can open your documents.</p></section>
+          <p class="small muted">This is a sample notice for the prototype. The university's data protection officer should approve the final wording.</p>
+        </div>
+      </section>
+
+      <!-- "Are you sure?" dialog -->
+      <div class="cf-scrim" id="cfScrim" hidden></div>
+      <div class="cf" id="cf" role="alertdialog" aria-modal="true" aria-labelledby="cfTitle" aria-describedby="cfText" hidden>
+        <h3 id="cfTitle">Are you sure?</h3>
+        <p class="muted" id="cfText"></p>
+        <dl class="d-sum" id="cfSum"></dl>
+        <div class="cf-btns"><button class="btn btn-ghost" id="cfNo" type="button">Cancel</button><button class="btn btn-primary" id="cfYes" type="button">Yes</button></div>
+      </div>
+
+      <!-- Documents: send files straight to the admin office -->
+      <section class="screen" id="s-docs" hidden>
+        <div class="topbar"><button class="back" id="docsBack" type="button" aria-label="Back">‹</button><h2>Send documents</h2></div>
+        <div class="body">
+          <ol class="d-steps" aria-label="Steps">
+            <li id="dStep1">Scan</li><li id="dStep2">Details</li><li id="dStep3">Sent</li><li id="dStep4">Review</li><li id="dStep5">Done</li>
+          </ol>
+
+          <!-- Step 1: scan the TP card -->
+          <div class="d-pane" id="docsScan">
+            <p class="muted">Scan your student card so the admin office knows who the documents are from.</p>
+            <div class="scanner" id="docScanner">
+              <div class="card-id" aria-hidden="true"><span>STUDENT ID CARD</span><span><b>TP ● ● ● ● ● ●</b><br>YOUR NAME</span></div>
+              <div class="scanline"></div>
+            </div>
+            <div class="scan-box" id="docScanBox" hidden>
+              <img id="docScanImg" alt="Photo of your card">
+              <div class="scan-txt"><b id="docScanMsg">Reading your card…</b><span class="small muted" id="docScanSub"></span></div>
+            </div>
+            <button class="link" id="docScanAgain" type="button" hidden>Scan a different card</button>
+          </div>
+
+          <!-- Step 2: service, files and a note -->
+          <div class="d-pane" id="docsForm" hidden>
+            <div class="d-who"><span class="who-l"><img class="who-card" id="docWhoImg" alt="Your scanned student card" hidden><span>Sending as <b class="mono" id="docWho">TP101189</b></span></span><button class="btn-text" id="docRescan" type="button">Scan a different card</button></div>
+            <div class="field"><label for="docSvc">Which service is this for?</label><select id="docSvc" class="select"></select></div>
+            <div class="field">
+              <span class="f-label">Documents</span>
+              <label class="dropzone" id="dropzone" for="docInput" tabindex="0" role="button" aria-describedby="docErr">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+                <b>Choose PDF or Word files</b>
+                <span class="small muted">or drag them here · up to 5 files, 10 MB each</span>
+              </label>
+              <input type="file" id="docInput" multiple accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
+              <div class="docs" id="docList" hidden></div>
+            </div>
+            <div class="field">
+              <label for="docNote">Write a note</label>
+              <textarea id="docNote" aria-describedby="docErr docNoteCount" class="textarea" rows="4" maxlength="500" placeholder="What are these documents for? For example: payment receipt for my November instalment."></textarea>
+              <span class="small muted d-count" id="docNoteCount">0 / 500</span>
+            </div>
+            <label class="consent" for="docConsent"><input type="checkbox" id="docConsent"><span>I agree to send these documents and my TP number to the team I chose. They're deleted 90 days after the request is closed. <button class="link privacy-link" type="button">Read the privacy notice</button></span></label>
+            <p class="err" id="docErr" role="alert"></p>
+          </div>
+
+          <!-- Step 3: sent, with the estimated response time -->
+          <div class="d-pane" id="docsSent" hidden>
+            <div class="d-head"><span class="d-tick"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><div><h3>Documents sent</h3><p class="small muted" id="docSentText"></p></div></div>
+            <div class="d-eta">
+              <div class="row-between"><span class="eyebrow">Estimated response</span><span class="mono small" id="docEtaLeft">0:40</span></div>
+              <b id="docEtaText">Usually within 1 working day</b>
+              <div class="progress"><i id="docEtaBar" style="width:0%"></i></div>
+              <span class="small muted">We'll send you a notification as soon as the office replies. This demo replies in under a minute.</span>
+            </div>
+            <dl class="d-sum" id="docSummary"></dl>
+            <button class="btn btn-ghost d-retract" type="button">Retract submission</button>
+          </div>
+
+          <!-- Step 4: review (waiting, then the office's reply) -->
+          <div class="d-pane" id="docsReview" hidden>
+            <div class="d-wait" id="docWait">
+              <div class="d-officer"><span class="avatar" id="docOffAv">TB</span><div><b id="docOffName">Tunde Bello</b><span class="small muted" id="docOffRole">Fees and Payments officer</span></div></div>
+              <p class="d-status"><span class="typing" aria-hidden="true"><i></i><i></i><i></i></span><span id="docWaitText">Reviewing your documents…</span></p>
+              <span class="small muted mono" id="docWaitLeft"></span>
+              <button class="btn btn-ghost d-retract" type="button">Retract submission</button>
+            </div>
+            <div class="d-reply" id="docReply" hidden>
+              <div class="row-between"><div class="d-officer"><span class="avatar" id="docRepAv">TB</span><div><b id="docRepName">Tunde Bello</b><span class="small muted" id="docRepRole"></span></div></div><span class="tag" id="docDecision">Approved</span></div>
+              <p class="d-msg" id="docRepMsg"></p>
+              <div id="docRepStepsWrap"><span class="eyebrow">What to do next</span><ul class="q-key" id="docRepSteps"></ul></div>
+              <span class="small muted mono" id="docRepTime"></span>
+            </div>
+          </div>
+
+          <!-- Step 5: done -->
+          <div class="d-pane d-done" id="docsClosed" hidden>
+            <div class="done-mark"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+            <h3>All done</h3>
+            <p class="muted" id="docClosedText"></p>
+            <button class="btn btn-ghost" id="docNew" type="button">Send new documents</button>
+          </div>
+
+          <p class="small muted d-foot-note" id="docPrivacy">In this prototype nothing is actually uploaded; the files stay on this device.</p>
+        </div>
+        <div class="foot"><button class="btn btn-primary" id="docsGo" type="button">Scan TP card</button></div>
+      </section>
+
+      <!-- D: login (phone): scan the TP card -->
+      <section class="screen" id="s-login" hidden>
+        <div class="topbar"><button class="back" data-back type="button" aria-label="Back">‹</button><h2>Scan your card</h2></div>
+        <div class="body">
+          <p class="muted">Use your phone's camera to scan the front of your student card. We'll read your TP number from it.</p>
+          <div class="scanner" id="phoneScanner">
+            <div class="card-id" aria-hidden="true"><span>STUDENT ID CARD</span><span><b>TP ● ● ● ● ● ●</b><br>YOUR NAME</span></div>
+            <div class="scanline"></div>
+          </div>
+          <div class="scan-box" id="scanBox" hidden>
+            <img id="scanImg" alt="Photo of your card">
+            <div class="scan-txt"><b id="scanMsg">Reading your card…</b><span class="small muted" id="scanSub"></span></div>
+          </div>
+          <ul class="q-key">
+            <li>Lay the card flat on a dark surface.</li>
+            <li>Fit the whole card in the frame, in good light.</li>
+            <li>Tilt slightly if there's glare on the card.</li>
+          </ul>
+          <p class="small muted priv-line">By scanning, you agree to the <button class="link privacy-link" type="button">privacy notice</button>. The card photo is only used to read your TP number and isn't kept.</p>
+        </div>
+        <div class="foot"><button class="btn btn-primary" id="scanTp" type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><rect x="7" y="8" width="10" height="8" rx="1.5"/></svg>Scan TP card</button></div>
+      </section>
+
+      <!-- E: kiosk -->
+      <section class="screen" id="s-kiosk" hidden>
+        <div class="topbar"><button class="back" data-back type="button" aria-label="Back">‹</button><h2>Lobby kiosk</h2><span class="tag accent">Kiosk 2</span></div>
+        <div class="body">
+          <div id="kiosk-scan" class="stack">
+            <div class="scanner" id="scanner">
+              <div class="card-id" id="cardId" aria-hidden="true"><span>STUDENT ID CARD</span><span><b>TP ● ● ● ● ● ●</b><br>YOUR NAME</span></div>
+              <div class="scanline"></div>
+            </div>
+            <p class="muted small">Tap Scan card, then take a clear photo of the front of your student card.</p>
+            <ul class="q-key">
+              <li>Lay the card flat on a dark surface.</li>
+              <li>Fit the whole card in the frame, in good light.</li>
+              <li>Tilt slightly if there's glare on the card.</li>
+            </ul>
+          <p class="small muted priv-line">By scanning, you agree to the <button class="link privacy-link" type="button">privacy notice</button>. The card photo is only used to read your TP number and isn't kept.</p>
+          </div>
+        </div>
+        <div class="foot"><button class="btn btn-primary" id="kioskGo" type="button">Scan card</button></div>
+      </section>
+
+      <!-- F/G: services -->
+      <section class="screen" id="s-services" hidden>
+        <div class="topbar"><button class="back" data-back type="button" aria-label="Back">‹</button><h2>Choose a service</h2></div>
+        <div class="body">
+          <p class="muted" id="hello">Welcome. What do you need help with today?</p>
+          <div id="svcList"></div>
+        </div>
+        <div class="foot"><button class="btn btn-primary" id="svcGo" type="button" disabled>Check availability</button></div>
+      </section>
+
+      <!-- M/N/O: checking -->
+      <section class="screen" id="s-checking" hidden>
+        <div class="topbar"><h2>Getting your ticket</h2></div>
+        <div class="body">
+          <div class="steps" id="checkSteps">
+            <div class="step"><span class="ck"></span><span>Checking queue availability</span></div>
+            <div class="step"><span class="ck"></span><span>Contacting cloud queue system</span></div>
+            <div class="step"><span class="ck"></span><span>Generating queue ticket</span></div>
+          </div>
+          <div class="board" id="availBox" hidden><span class="small">Counter <b id="avCounter">3</b> is open for <span id="avSvc"></span></span><span class="tag good"><span class="dot"></span>Open</span></div>
+          <div class="alert block-msg" id="checkMsg" role="alert" hidden><span class="ico" aria-hidden="true">!</span><span><b id="checkMsgTitle"></b><br><span id="checkMsgText"></span></span></div>
+        </div>
+        <div class="foot" id="checkFoot" hidden><button class="btn btn-primary" id="checkBack" type="button">Choose another service</button></div>
+      </section>
+
+      <!-- P/Q/R/S: ticket -->
+      <section class="screen" id="s-ticket" hidden>
+        <div class="topbar"><h2>Your ticket</h2><span class="tag good live"><span class="dot"></span>Live</span></div>
+        <div class="body">
+          <div class="ticket" id="ticketCard">
+            <div class="top">
+              <span class="lbl" id="tkSvc">Fees &amp; Payments</span>
+              <div class="num" id="tkNum">FP-047</div>
+              <span class="small" id="tkIssued">Issued 10:02 via app</span>
+            </div>
+            <div class="perf"></div>
+            <div class="bottom">
+              <div><span class="lbl">Ahead</span><b id="tkAhead">6</b></div>
+              <div><span class="lbl">ETA</span><b id="tkEta">~18m</b></div>
+              <div><span class="lbl">Counter</span><b id="tkCounter">3</b></div>
+            </div>
+          </div>
+          <div class="alert" id="approach" hidden><span class="ico" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></span><span id="approachText">Your turn is approaching. Head to the Student Admin Office and check in at Counter 3.</span></div>
+          <div class="stack-sm">
+            <div class="row-between"><span class="eyebrow">Queue progress</span><span class="small mono" id="tkPct">0%</span></div>
+            <div class="progress"><i id="tkBar" style="width:0%"></i></div>
+          </div>
+          <div class="board"><span class="small muted">Now serving</span><b id="tkServing">FP-041</b></div>
+          <div class="stack-sm">
+            <span class="eyebrow">Queue updates</span>
+            <div class="feed" id="feed"></div>
+          </div>
+        </div>
+        <div class="foot">
+          <button class="btn btn-primary" id="arriveBtn" type="button" disabled>I'm at the counter</button>
+          <button class="btn btn-text" id="cancelBtn" type="button">Leave queue</button>
+        </div>
+      </section>
+
+      <!-- T/U: QR check-in -->
+      <section class="screen" id="s-checkin" hidden>
+        <div class="topbar"><button class="back" data-back type="button" aria-label="Back">‹</button><h2>Check in</h2></div>
+        <div class="body">
+          <p class="muted">Show this code to the scanner at <b class="ink">Counter <span class="cnum">3</span></b>.</p>
+          <div class="qr-box"><canvas id="qr" width="29" height="29" aria-label="Check-in QR code"></canvas></div>
+          <p class="mono qr-num" id="qrNum">FP-047</p>
+          <div class="board" id="ciStatus"><span class="small">Waiting for scan…</span><span class="tag warn"><span class="dot"></span>Not checked in</span></div>
+        </div>
+        <div class="foot"><button class="btn btn-primary" id="scanBtn" type="button">Simulate counter scan</button></div>
+      </section>
+
+      <!-- V: called -->
+      <section class="screen" id="s-called" hidden>
+        <div class="topbar"><h2 id="clTitle">You're up</h2></div>
+        <div class="body">
+          <div class="callout" id="clCallout"><span class="ring"></span>
+            <span class="eyebrow" id="clEyebrow">Now calling</span>
+            <span class="big mono" id="clNum">FP-047</span>
+            <span id="clSub">Please go to <b>Counter <span class="cnum">3</span></b></span>
+          </div>
+          <div class="staff"><span class="avatar">TB</span><span><b>Tunde Bello</b><br><span class="small muted" id="clRole">Fees &amp; Payments officer</span></span></div>
+          <p class="ns" id="nsTimer" role="timer" aria-live="off"></p>
+          <p class="muted small">Checked in at <span id="clTime" class="mono">10:21</span>. Have your student card ready.</p>
+        </div>
+        <div class="foot"><button class="btn btn-primary" id="startSvc" type="button">I'm at Counter <span class="cnum">3</span></button></div>
+      </section>
+
+      <!-- W/X: service -->
+      <section class="screen" id="s-service" hidden>
+        <div class="topbar"><h2>Session notes</h2><span class="tag accent"><span class="dot"></span>Session ended</span></div>
+        <div class="body">
+          <div class="sess-head">
+            <div class="sess-top"><span><span class="eyebrow">Your request</span><br><b id="svName">Fees &amp; Payments</b></span><span class="chip-lg mono" id="svNum">FP-047</span></div>
+            <div class="sess-meta">
+              <div><span class="eyebrow">With</span><b>Tunde Bello</b></div>
+              <div><span class="eyebrow">Counter</span><b class="cnum">3</b></div>
+              <div><span class="eyebrow">Time</span><b id="svTime" class="mono">10:24</b></div>
+              <div><span class="eyebrow">Length</span><b id="svLen" class="mono">6 min</b></div>
+            </div>
+          </div>
+
+          <section class="note-sec"><h3>Outcome</h3>
+            <div class="outcome"><span class="tag" id="svOutTag">Resolved</span><span id="svOut"></span></div>
+            <p class="small muted" id="svRef"></p>
+          </section>
+
+          <section class="note-sec"><h3>What was discussed</h3><ul class="disc" id="svDisc"></ul></section>
+
+          <section class="note-sec"><h3>Follow-up</h3><div class="follow" id="svFollow"></div></section>
+
+          <section class="note-sec"><div class="sec-row"><h3>Your next steps</h3><span class="small muted mono" id="svTodoCount">0/3 done</span></div>
+            <div class="checklist" id="svTodos"></div>
+          </section>
+
+          <section class="note-sec"><h3>Documents</h3><div class="docs" id="svDocs"></div></section>
+
+          <p class="small muted">A copy of these notes has been sent to your student email.</p>
+        </div>
+        <div class="foot"><button class="btn btn-primary" id="completeBtn" type="button">Done</button></div>
+      </section>
+
+      <!-- X/Y: done -->
+      <section class="screen" id="s-done" hidden>
+        <div class="body done-body">
+          <div class="done-mark"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+          <div class="stack-sm"><h1 class="title-lg">All done</h1><p class="muted">Ticket <b class="mono" id="dnNum">FP-047</b> is marked completed.</p></div>
+          <div class="stats">
+            <div><span class="eyebrow">Waited</span><b id="dnWait">19m</b></div>
+            <div><span class="eyebrow">Service</span><b id="dnSvc">4m</b></div>
+            <div><span class="eyebrow">Counter</span><b class="cnum">3</b></div>
+          </div>
+          <div class="stack-sm"><span class="eyebrow">Rate your visit</span><div class="stars" id="stars"></div><p class="small muted" id="rateMsg"></p></div>
+        </div>
+        <div class="foot"><button class="btn btn-primary" id="restart" type="button">Back to start</button></div>
+      </section>
+    </div>
+
+<script>
+(() => {
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+const SERVICES = [
+  {id:'H', code:'AR', name:'Academic Records', sub:'Transcripts, results, record corrections', ahead:10, per:2, counter:1,
+    list:['Identity confirmed with student card','Transcript request logged','Processing fee confirmed','Collection date given']},
+  {id:'I', code:'VL', name:'Student Verification Letter', sub:'Proof of enrolment for banks, visas, sponsors', ahead:7, per:2, counter:2,
+    list:['Identity confirmed with student card','Letter purpose recorded','Letter printed and stamped']},
+  {id:'J', code:'FP', name:'Fees & Payments', sub:'Balances, receipts, payment plans', ahead:12, per:2, counter:3,
+    list:['Identity confirmed with student card','Fee statement reviewed','Payment receipt issued','Balance updated on portal']},
+  {id:'K', code:'GE', name:'General Enquiries', sub:'Anything else for the admin office', ahead:8, per:2, counter:4,
+    list:['Identity confirmed with student card','Question answered','Follow-up noted if needed']},
+  {id:'L', code:'RG', name:'Registration', sub:'Course add/drop, late registration', ahead:15, per:3, counter:5,
+    list:['Identity confirmed with student card','Course form checked','Advisor approval verified','Registration updated']},
+];
+
+const FLOW = [
+  ['A','START'],['B','Student accesses APAdmin'],['C','Choose access method',1],
+  ['D','Login with Student ID'],['E','Scan Student ID / Enter details'],
+  ['F','Select administration service'],['G','Choose service',1],
+  ['H','Academic Records'],['I','Student Verification Letter'],['J','Fees and Payments'],['K','General Enquiries'],['L','Registration'],
+  ['M','Check queue availability'],['N','Cloud queue management system'],['O','Generate queue ticket'],
+  ['P','Display queue number and ETA'],['Q','Update queue in real time'],['R',"Is student's turn approaching?",1],
+  ['S','Send mobile notification'],['T','Student arrives at counter'],['U','QR code check-in'],
+  ['V','Staff calls student'],['W','Provide requested service'],['X','Update ticket as completed'],['Y','END'],
+];
+
+const SCREEN_NODES = {
+  welcome:['B','C'], login:['D'], kiosk:['E'], services:['F','G'],
+  checking:['M','N','O'], ticket:['P','Q','R'], checkin:['T','U'], called:['V'], service:['W'], done:['X','Y'],
+};
+
+let st, timer, hist = [], speed = 1;
+function fresh(){ return {method:null, name:null, tp:null, svc:null, seen:new Set(['A']), ticket:null, notified:false}; }
+st = fresh();
+
+function now(){ return new Date(); }
+function hhmm(d){ return d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}); }
+
+function renderFlow(cur){
+  const curNodes = [...(SCREEN_NODES[cur] || [])];
+  if (cur==='ticket' && st.notified) curNodes.push('S');
+  curNodes.forEach(k => st.seen.add(k));
+  if (st.svc) st.seen.add(st.svc.id);
+  const skip = new Set();
+  if (st.method==='app') skip.add('E'); if (st.method==='kiosk') skip.add('D');
+  if (st.svc) SERVICES.forEach(s => { if (s.id!==st.svc.id) skip.add(s.id); });
+  $$('#flowList li').forEach(li => {
+    const k = li.dataset.k;
+    li.className = (li.classList.contains('dec')?'dec ':'') +
+      (curNodes.includes(k) ? 'now' : st.seen.has(k) ? 'seen' : skip.has(k) ? 'skip' : '');
+  });
+}
+
+function go(name, push=true){
+  const cur = $$('.screen').find(s => !s.hidden);
+  if (push && cur) hist.push(cur.id.slice(2));
+  $$('.screen').forEach(s => s.hidden = s.id !== 's-'+name);
+  renderFlow(name);
+  const enter = ENTER[name]; if (enter) enter();
+  if (go.ready){
+    const h = document.querySelector(`#s-${name} .topbar h2, #s-${name} h1`);
+    if (h){ h.tabIndex = -1; h.focus({preventScroll: true}); }
+  }
+}
+$$('[data-back]').forEach(b => b.addEventListener('click', () => { const p = hist.pop(); if (p) go(p, false); }));
+
+/* B/C welcome */
+$$('.choice').forEach(b => b.addEventListener('click', () => { st.method = b.dataset.method; go(b.dataset.go); }));
+
+/* TP number rules: "TP" followed by exactly 6 digits, e.g. TP101189 */
+function checkTP(raw){
+  const v = String(raw || '').trim().toUpperCase().replace(/\s+/g, '');
+  if (!v) return {err:'Enter your TP number.'};
+  if (!v.startsWith('TP')) return {err:'Error: no TP number found.'};
+  if (!/^TP\d{6}$/.test(v)) return {err:'Error: only 6 numbers in a TP.'};
+  return {tp:v};
+}
+function showFieldErr(input, errEl, msg){
+  errEl.textContent = msg || '';
+  input.setAttribute('aria-invalid', msg ? 'true' : 'false');
+}
+
+/* Card scanning: the phone camera takes a photo of the card, then the TP number is read from it.
+   1) a barcode / QR on the card, where the browser can decode one; 2) otherwise Claude reads the printed text. */
+const photoInput = document.createElement('input');
+photoInput.type = 'file'; photoInput.accept = 'image/*'; photoInput.setAttribute('capture', 'environment'); photoInput.hidden = true;
+document.body.appendChild(photoInput);
+let onPhoto = null;
+function scanCard(cb){ onPhoto = cb; photoInput.value = ''; photoInput.click(); }
+photoInput.addEventListener('change', async () => {
+  const file = photoInput.files && photoInput.files[0]; const cb = onPhoto;
+  if (!file || !cb) return;
+  cb({state:'reading', url: URL.createObjectURL(file)});
+  try { cb(await readCard(file)); }
+  catch (e) { cb({state:'error', err: scanErrorText(e && e.code)}); }
+});
+async function shrink(file){
+  const bmp = await createImageBitmap(file);
+  const s = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+  const c = document.createElement('canvas'); c.width = Math.round(bmp.width*s); c.height = Math.round(bmp.height*s);
+  c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+  return new Promise(r => c.toBlob(b => r(b || file), 'image/jpeg', 0.88));
+}
+async function readCard(file){
+  if ('BarcodeDetector' in window){
+    try {
+      const codes = await new BarcodeDetector().detect(await createImageBitmap(file));
+      for (const c of codes){ const m = String(c.rawValue).toUpperCase().match(/TP\s*\d+/); if (m) return finish(m[0], null); }
+    } catch {}
+  }
+  const sample = window.claude && window.claude.use ? await window.claude.use('sample').catch(() => null) : null;
+  if (!sample) return readCardLocal(file, finish);           // no Claude here (e.g. a local copy): read it in the browser
+  const img = await shrink(file);
+  const out = await sample.json(
+    'The attached image is a photo taken by a student of their university student ID card. ' +
+    'Find the student\'s TP number: the letters "TP" followed by digits, printed or encoded on the card (format example: TP101189). ' +
+    'Copy the characters exactly as printed, even if the digit count looks wrong. Also find the student\'s first name if it is printed. ' +
+    'Reply with JSON only, in this shape: {"tp": string or null, "firstName": string or null}. Use null for anything you cannot read.',
+    {images:[img], modelTier:'quick'});
+  if (!out || !out.tp) return {state:'error', err:'Error: no TP number found on the card. Retake the photo in good light.'};
+  return finish(out.tp, out.firstName);
+  function finish(tpRaw, name){
+    const r = checkTP(tpRaw);
+    if (r.err) return {state:'error', err: r.err + ' (read "' + String(tpRaw).toUpperCase() + '" from the card)'};
+    return {state:'ok', tp:r.tp, name: name ? String(name).trim().split(/\s+/)[0] : null};
+  }
+}
+/* In-browser card reader, used when Claude isn't available (for example the local copy opened as a file).
+   1) the barcode on the card (ZXing), 2) the printed TP number (Tesseract text recognition).
+   Both libraries load from a CDN the first time, so this needs an internet connection once. */
+function loadScript(src){
+  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej({code:'unavailable'}); document.head.appendChild(s); });
+}
+let zxingReady = null, ocrWorker = null;
+function tpFromText(t){
+  const up = String(t).toUpperCase();
+  const m = up.match(/[T7][\s.]*P[\s.:\-]*([0-9OQDILS|B]{6})(?![0-9])/);
+  if (!m) return null;
+  return 'TP' + m[1].replace(/[OQD]/g,'0').replace(/[IL|]/g,'1').replace(/S/g,'5').replace(/B/g,'8');
+}
+async function readCardLocal(file, finish){
+  // 1) barcode
+  try {
+    zxingReady = zxingReady || loadScript('https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js');
+    await zxingReady;
+    const url = URL.createObjectURL(file);
+    const res = await new ZXing.BrowserMultiFormatReader().decodeFromImageUrl(url).catch(() => null);
+    URL.revokeObjectURL(url);
+    const tp = res && tpFromText(res.getText());
+    if (tp) return finish(tp, null);
+  } catch {}
+  // 2) printed text
+  if (!window.Tesseract) await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js');
+  ocrWorker = ocrWorker || Tesseract.createWorker('eng');
+  const w = await ocrWorker;
+  // Read a part of the photo, enlarged by k. If a TP number shows up, zoom right into that line and read it
+  // again at a few sizes, then take the answer most readings agree on.
+  const bmp = await createImageBitmap(file), W = bmp.width, H = bmp.height;
+  async function readRegion(x, y, rw, rh, k){
+    const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(rw * k)); c.height = Math.max(1, Math.round(rh * k));
+    const g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(bmp, x, y, rw, rh, 0, 0, c.width, c.height);
+    return (await w.recognize(c)).data;
+  }
+  async function tryRegion(x, y, rw, rh, k){
+    const d = await readRegion(x, y, rw, rh, k);
+    const tp = tpFromText(d.text);
+    if (!tp) return null;
+    const line = (d.lines || []).find(l => tpFromText(l.text));
+    if (!line) return tp;
+    const b = line.bbox, lh = (b.y1 - b.y0) / k, pad = lh * 0.8;
+    const lx = Math.max(0, x + b.x0 / k - pad), ly = Math.max(0, y + b.y0 / k - pad);
+    const lw = Math.min(W - lx, (b.x1 - b.x0) / k + pad * 2), lhh = Math.min(H - ly, lh + pad * 2);
+    const votes = {[tp]: 0.5};               // the close-up readings count for more than the first one
+    for (const target of [36, 48, 60, 75, 90, 110, 130]){
+      const t = tpFromText((await readRegion(lx, ly, lw, lhh, target / lh)).text);
+      if (t) votes[t] = (votes[t] || 0) + 1;
+    }
+    return Object.entries(votes).sort((p, q) => q[1] - p[1])[0][0];
+  }
+  // whole photo first, then overlapping quarters of it (centre first) in case the card is small in the photo
+  let tp = await tryRegion(0, 0, W, H, Math.min(2400 / Math.max(W, H), 2.5));
+  if (tp) return finish(tp, null);
+  const tiles = [];
+  for (let gy = 0; gy < 3; gy++) for (let gx = 0; gx < 3; gx++) tiles.push([gx * W / 4, gy * H / 4]);
+  tiles.sort((p, q) => Math.hypot(p[0] - W/4, p[1] - H/4) - Math.hypot(q[0] - W/4, q[1] - H/4));
+  for (const [x, y] of tiles){
+    tp = await tryRegion(x, y, W / 2, H / 2, Math.min(2000 / Math.max(W / 2, H / 2), 6));
+    if (tp) return finish(tp, null);
+  }
+  return {state:'error', err:'Couldn\'t find a TP number. Take the photo closer, with the card flat and filling the frame.'};
+}
+function scanErrorText(code){
+  if (code === 'unavailable' || code === 'not_granted' || code === 'images_unavailable') return 'Card scanning isn\'t available right now. Try again, or ask at the General Enquiries counter.';
+  if (code === 'rate_limited') return 'Too many scans just now. Wait a moment, then try again.';
+  if (code === 'image_rejected') return 'That photo couldn\'t be used. Take a new photo of the card.';
+  return 'Couldn\'t read the card. Retake the photo with the whole card in frame.';
+}
+
+/* D login (phone): scan the card, then continue */
+let phoneScanned = false;
+const SCAN_LABEL = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><rect x="7" y="8" width="10" height="8" rx="1.5"/></svg>Scan TP card';
+/* Show the photo of the student's own card inside the scanner frame (it stays on this device). */
+function showCardPhoto(frame, url){
+  let img = frame.querySelector('.scan-photo');
+  if (!img){ img = document.createElement('img'); img.className = 'scan-photo'; img.alt = 'Photo of your student card'; frame.appendChild(img); }
+  img.src = url; frame.classList.add('has-photo'); frame.classList.remove('scan-good', 'scan-bad');
+}
+function clearCardPhoto(frame){
+  const img = frame.querySelector('.scan-photo');
+  if (img) img.remove();
+  frame.classList.remove('has-photo', 'scan-good', 'scan-bad');
+}
+function resetPhoneScan(){
+  clearCardPhoto($('#phoneScanner'));
+  phoneScanned = false; $('#scanBox').hidden = true; $('#phoneScanner').classList.remove('scanning');
+  const b = $('#scanTp'); b.disabled = false; b.innerHTML = SCAN_LABEL;
+}
+$('#scanTp').onclick = () => {
+  if (phoneScanned) return go('services');
+  const box = $('#scanBox'), sc = $('#phoneScanner'), btn = $('#scanTp');
+  scanCard(res => {
+    box.hidden = false; box.className = 'scan-box';
+    if (res.state === 'reading'){ showCardPhoto(sc, res.url); $('#scanMsg').textContent = 'Reading your card…'; $('#scanSub').textContent = 'Looking for your TP number'; sc.classList.add('scanning'); btn.disabled = true; btn.textContent = 'Reading card…'; return; }
+    sc.classList.remove('scanning'); btn.disabled = false;
+    sc.classList.add(res.state === 'ok' ? 'scan-good' : 'scan-bad');
+    if (res.state === 'ok'){
+      phoneScanned = true; st.tp = res.tp; if (res.name) st.name = res.name; st.cardPhoto = sc.querySelector('.scan-photo')?.src || null;
+      box.classList.add('ok'); $('#scanMsg').textContent = `✓ ${res.tp} read from your card`; $('#scanSub').textContent = 'Check it matches your card, then continue.';
+      btn.textContent = res.name ? `Continue as ${res.name}` : 'Continue';
+    } else {
+      box.classList.add('bad'); $('#scanMsg').textContent = 'Scan failed'; $('#scanSub').textContent = res.err;
+      btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><rect x="7" y="8" width="10" height="8" rx="1.5"/></svg>Scan again';
+    }
+  });
+};
+
+/* E kiosk: scan only */
+let scanned = false;
+function setKiosk(){
+  scanned = false; clearCardPhoto($('#scanner'));
+  $('#kioskGo').textContent = 'Scan card'; $('#kioskGo').disabled = false;
+  $('#scanner').classList.remove('scanning'); $$('#scanner .scan-ok, #scanner .scan-err').forEach(x => x.remove()); $('#cardId').style.transform='';
+}
+$('#kioskGo').onclick = () => {
+  if (scanned) return go('services');
+  const sc = $('#scanner');
+  scanCard(res => {
+    $$('#scanner .scan-ok, #scanner .scan-err').forEach(x => x.remove());
+    if (res.state === 'reading'){ showCardPhoto(sc, res.url); sc.classList.add('scanning'); $('#kioskGo').disabled = true; $('#kioskGo').textContent = 'Reading card…'; return; }
+    sc.classList.remove('scanning'); $('#kioskGo').disabled = false;
+    sc.classList.add(res.state === 'ok' ? 'scan-good' : 'scan-bad');
+    const div = document.createElement('div');
+    if (res.state === 'ok'){
+      scanned = true; st.tp = res.tp; if (res.name) st.name = res.name; st.cardPhoto = sc.querySelector('.scan-photo')?.src || null;
+      div.className = 'scan-ok'; div.textContent = `✓ Card read · ${res.tp}`;
+      $('#kioskGo').textContent = res.name ? `Continue as ${res.name}` : 'Continue';
+    } else {
+      div.className = 'scan-err'; div.textContent = res.err; $('#kioskGo').textContent = 'Scan again';
+    }
+    sc.appendChild(div);
+  });
+};
+
+/* F/G services */
+function renderServices(){
+  const off = officeStatus();
+  $('#hello').textContent = `${st.name ? 'Hi ' + st.name : 'Welcome'}${st.tp ? ' (' + st.tp + ')' : ''}. What do you need help with today?` + (off.open ? '' : ` The office is closed right now; tickets open ${off.opensText}.`);
+  $('#svcList').innerHTML = SERVICES.map(s => {
+    const wait = s.ahead * s.per;
+    const full = s.ahead >= QUEUE_CAP;
+    const tag = full ? `<span class="wait mono full"><span class="lbl">Queue</span>Full</span>` : `<span class="wait mono${wait > 20 ? ' long' : ''}"><span class="lbl">Wait</span>~${wait}m</span>`;
+    return `<button class="svc" type="button" data-id="${s.id}" aria-pressed="${st.svc?.id===s.id}"${full ? ' disabled aria-disabled="true"' : ''} style="--c:var(--c-${s.code.toLowerCase()})">
+      <span class="code">${s.code}</span><span class="meta"><span class="name">${s.name}</span><br><span class="sub">${s.sub}<br>${s.ahead} waiting · Counter ${s.counter}</span></span>${tag}</button>`;
+  }).join('');
+  $$('#svcList .svc').forEach(b => b.onclick = () => {
+    st.svc = SERVICES.find(s => s.id===b.dataset.id);
+    $$('#svcList .svc').forEach(x => x.setAttribute('aria-pressed', x===b));
+    $('#svcGo').disabled = false; renderFlow('services');
+  });
+  if (st.svc && st.svc.ahead >= QUEUE_CAP) st.svc = null;
+  $('#svcGo').disabled = !st.svc;
+}
+$('#svcGo').onclick = () => go('checking');
+
+/* M/N/O checking */
+function runChecking(){
+  const steps = $$('#checkSteps .step'); steps.forEach(s => {s.className='step'; s.querySelector('.ck').textContent='';});
+  $('#availBox').hidden = true;
+  const nodes = ['M','N','O']; let i = 0;
+  $$('#flowList li').forEach(li => { if (nodes.includes(li.dataset.k)) li.classList.remove('now'); });
+  $('#checkMsg').hidden = true; $('#checkFoot').hidden = true;
+  const tick = () => {
+    if (i===1){ const why = bookingBlock(st.svc); if (why){ steps[0].className='step bad'; steps[0].querySelector('.ck').textContent='!'; return checkFail(why); } }
+    if (i>0){ steps[i-1].className='step ok'; steps[i-1].querySelector('.ck').textContent='✓'; }
+    if (i===1){ $('#avSvc').textContent = st.svc.name; $('#avCounter').textContent = st.svc.counter; $('#availBox').hidden=false; }
+    if (i===steps.length){ makeTicket(); return setTimeout(() => go('ticket'), 500/speed); }
+    steps[i].className='step run';
+    $$('#flowList li').forEach(li => li.classList.toggle('now', li.dataset.k===nodes[i]));
+    i++; timer = setTimeout(tick, 900/speed);
+  };
+  tick();
+}
+
+/* P/Q/R/S ticket */
+function makeTicket(){
+  const s = st.svc, n = 30 + Math.floor(Math.random()*40);
+  st.ticket = { num:`${s.code}-${String(n).padStart(3,'0')}`, n, ahead:s.ahead, start:s.ahead, issued:now(), counter:s.counter, served:n - s.ahead - 1 };
+  st.notified = false; $('#feed').innerHTML='';
+  log(`Ticket ${st.ticket.num} issued${st.method==='kiosk'?' at Kiosk 2, sent to your phone':''}`);
+}
+function log(msg){
+  const f = $('#feed'); f.insertAdjacentHTML('afterbegin', `<div><span class="t">${hhmm(now()).replace(/\s?[AP]M/i,'')}</span><span>${msg}</span></div>`);
+  while (f.children.length > 5) f.lastChild.remove();
+}
+function renderTicket(){
+  const t = st.ticket, s = st.svc;
+  $('#tkSvc').textContent = s.name; $('#tkNum').textContent = t.num;
+  $('#tkIssued').textContent = `Issued ${hhmm(t.issued)} via ${st.method==='kiosk'?'Kiosk 2':'app'}`;
+  $('#tkAhead').textContent = t.ahead; $('#tkEta').textContent = t.ahead ? `~${t.ahead*s.per}m` : 'Now';
+  $('#tkCounter').textContent = t.counter;
+  $('#tkServing').textContent = `${s.code}-${String(t.served).padStart(3,'0')}`;
+  const pct = Math.round((1 - t.ahead / t.start) * 100) || 0;
+  $('#tkPct').textContent = pct+'%'; $('#tkBar').style.width = pct+'%';
+  $$('.cnum').forEach(e => e.textContent = t.counter);
+  $('#approach').hidden = !st.notified;
+  $('#approachText').textContent = t.ahead ? `Almost your turn: ${t.ahead} ${t.ahead===1?'student':'students'} ahead of you. Please make your way to Counter ${t.counter} and check in.` : `It's your turn. Please check in at Counter ${t.counter} now.`;
+  $('#arriveBtn').disabled = !st.notified;
+  $('#arriveBtn').textContent = st.notified ? "I'm at the counter" : 'Check-in opens when your turn is near';
+  const ticket = $('#ticketCard'); ticket.style.setProperty('--perf-y', ticket.querySelector('.perf').offsetTop+'px');
+}
+function advanceQueue(){
+  const t = st.ticket; if (!t || t.ahead===0) return;
+  t.ahead--; t.served++;
+  log(`${st.svc.code}-${String(t.served).padStart(3,'0')} called to Counter ${t.counter} · ${t.ahead} ahead of you`);
+  const pct = 1 - t.ahead / t.start;
+  if (!st.notified && pct >= 0.7){       // R: Yes (70% of the queue served) -> S
+    st.notified = true;
+    const people = t.ahead === 1 ? '1 student is' : `${t.ahead} students are`;
+    notify(`Your turn is approaching · ${t.num}`,
+      t.ahead
+        ? `${people} ahead of you (about ${t.ahead * st.svc.per} min). Please make your way to Counter ${t.counter} at the Student Admin Office and have your student ID ready.`
+        : `You are next. Please proceed to Counter ${t.counter} at the Student Admin Office and have your student ID ready.`);
+    log(`Notification sent to your phone · ${t.ahead} ahead`);
+  }
+  renderTicket(); renderFlow('ticket');
+}
+function notify(title, text){
+  if (text === undefined){ text = title; title = 'APAdmin'; }
+  const kind = notifyKind(title, text);
+  if (kind && !notifyPrefs[kind]) return;                       // the student turned this alert off
+  $('#srLive').textContent = `${title}. ${text}`;
+  $('#pushTitle').textContent = title; $('#pushText').textContent = text;
+  $('#pushTime').textContent = kind && notifyPrefs.email ? 'now · emailed' : 'now';
+  const p = $('#push'); p.classList.add('show');
+  clearTimeout(p._t); p._t = setTimeout(() => p.classList.remove('show'), 8000);
+}
+$('#push').onclick = () => $('#push').classList.remove('show');
+function startQueueLoop(){ stopLoop(); timer = setInterval(() => { if (Math.random() < .75) advanceQueue(); }, 3200/speed); }
+function stopLoop(){ clearInterval(timer); clearTimeout(timer); }
+$('#arriveBtn').onclick = () => go('checkin');
+$('#cancelBtn').onclick = () => {
+  const b = $('#cancelBtn');
+  if (b.dataset.confirm){ stopLoop(); resetAll(); return; }
+  b.dataset.confirm = '1'; b.textContent = 'Tap again to give up your place'; b.style.color='var(--bad)';
+  setTimeout(() => { delete b.dataset.confirm; b.textContent='Leave queue'; b.style.color=''; }, 3000);
+};
+
+/* T/U QR check-in */
+function drawQR(text){
+  const c = $('#qr'), x = c.getContext('2d'), N = 29; let h = 2166136261;
+  for (const ch of text) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+  const rnd = () => ((h = Math.imul(h ^ (h >>> 15), 2246822507) ^ Math.imul(h ^ (h >>> 13), 3266489909)) >>> 0) / 4294967296;
+  x.fillStyle='#fff'; x.fillRect(0,0,N,N); x.fillStyle='#141a2b';
+  const finder = (a,b) => { x.fillRect(a,b,7,7); x.fillStyle='#fff'; x.fillRect(a+1,b+1,5,5); x.fillStyle='#141a2b'; x.fillRect(a+2,b+2,3,3); };
+  const inF = (i,j) => (i<8&&j<8)||(i>N-9&&j<8)||(i<8&&j>N-9);
+  for (let i=0;i<N;i++) for (let j=0;j<N;j++) if (!inF(i,j) && rnd()<.48) x.fillRect(i,j,1,1);
+  finder(0,0); finder(N-7,0); finder(0,N-7);
+}
+$('#scanBtn').onclick = () => {
+  const b = $('#scanBtn');
+  if (b.dataset.done) return go('called');
+  b.disabled = true; b.textContent = 'Scanning…';
+  setTimeout(() => {
+    $('#ciStatus').innerHTML = `<span class="small">Checked in at ${hhmm(now())}</span><span class="tag good"><span class="dot"></span>Checked in</span>`;
+    st.checkedIn = now(); b.disabled = false; b.dataset.done='1'; b.textContent='Continue';
+    setTimeout(() => { if (!$('#s-checkin').hidden) go('called'); }, 1200/speed);
+  }, 1200/speed);
+};
+
+/* V called */
+$('#startSvc').onclick = () => {
+  const b = $('#startSvc');
+  if (b.dataset.missed){ return rejoinQueue(); }
+  if (b.dataset.busy) return;
+  clearNoShow();
+  b.dataset.busy = '1'; b.disabled = true; b.textContent = 'In session with Tunde Bello…';
+  setTimeout(() => {
+    delete b.dataset.busy; b.disabled = false;
+    b.innerHTML = `I'm at Counter <span class="cnum">${st.ticket.counter}</span>`;
+    notify('Session notes ready · ' + st.ticket.num, 'Your notes, follow-up and next steps from today\'s session are ready to view.');
+    go('service');
+  }, 2500);
+};
+
+/* W/X session notes: what the officer recorded for the student after the session */
+const NOTES = {
+  AR:{ mins:7, outcome:'Transcript request submitted', resolved:false, ref:'Reference TR-24-08812',
+    disc:['You asked for an official transcript for a postgraduate application.',
+          'Your Semester 2 results are finalised, so they will be included.',
+          'You chose a printed, sealed copy to collect in person.'],
+    follow:{needed:true, when:'From Thu, 20 Nov', what:'Collect your sealed transcript at Counter 1. Bring your TP card.'},
+    todos:[['Pay the RM 50 transcript fee on the student portal','By Tue, 18 Nov'],['Upload your payment receipt under Requests › Transcripts','Right after paying'],['Collect the transcript at Counter 1','From Thu, 20 Nov']],
+    docs:[['PDF','Transcript request form (your copy)'],['PDF','Fee payment instructions']] },
+  VL:{ mins:4, outcome:'Letter issued', resolved:true, ref:'Letter no. VL-24-03317',
+    disc:['You needed proof of enrolment to open a bank account.',
+          'Your current address and programme details were confirmed.',
+          'The letter was printed, signed and stamped during the session.'],
+    follow:{needed:false},
+    todos:[['Take the stamped letter to your bank','The letter is valid for 30 days']],
+    docs:[['DOC','Verification letter (stamped original handed to you)'],['PDF','Digital copy sent to your student email']] },
+  FP:{ mins:9, outcome:'Instalment plan approved', resolved:true, ref:'Plan ref. FP-IP-24-1190',
+    disc:['Your outstanding balance for this semester is RM 1,200.',
+          'You agreed a 3-month instalment plan of RM 400 a month.',
+          'The late payment fee is waived because the plan was set up before the deadline.'],
+    follow:{needed:true, when:'Mon, 15 Dec', what:'Second instalment due. You don\'t need to visit if you pay online.'},
+    todos:[['Pay the first instalment of RM 400','By Fri, 28 Nov'],['Keep your payment receipt','Download it from the portal after paying'],['Set reminders for the next instalments','15 Dec and 15 Jan']],
+    docs:[['PDF','Instalment agreement'],['PDF','Updated fee statement']] },
+  GE:{ mins:6, outcome:'Partly resolved, passed to IT', resolved:false, ref:'IT Helpdesk ticket IT-55102',
+    disc:['You asked to change your registered home address. This was updated during the session.',
+          'You can\'t log in to your student email. This needs the IT Helpdesk, so a ticket was raised for you.'],
+    follow:{needed:true, when:'Within 2 working days', what:'IT Helpdesk will contact you on your personal email. If you hear nothing, reply to ticket IT-55102.'},
+    todos:[['Check your personal email for a message from IT Helpdesk','Within 2 working days'],['Confirm your new address on your portal profile','Today']],
+    docs:[['PDF','Address change confirmation']] },
+  RG:{ mins:8, outcome:'Registration updated', resolved:true, ref:'Registration slip RS-24-7745',
+    disc:['You asked to add the module Data Structures after the add/drop deadline.',
+          'Your advisor\'s approval was on file, so the late add was accepted.',
+          'Tutorial group B clashed with your timetable, so you were moved to group C.'],
+    follow:{needed:false},
+    todos:[['Check your updated timetable on the portal','Today'],['Pay the RM 100 late registration fee','By Sun, 30 Nov'],['Attend your first Data Structures class','Tue, 9:00 AM']],
+    docs:[['PDF','Updated course registration slip']] },
+};
+function renderService(){
+  const n = NOTES[st.svc.code], t = st.ticket;
+  st.svcSecs = n.mins * 60;
+  $('#svName').textContent = st.svc.name; $('#svNum').textContent = t.num;
+  $('#svTime').textContent = hhmm(now()); $('#svLen').textContent = `${n.mins} min`;
+  $('#svOut').textContent = n.outcome; $('#svRef').textContent = n.ref;
+  const tag = $('#svOutTag'); tag.className = 'tag ' + (n.resolved ? 'good' : 'warn'); tag.textContent = n.resolved ? 'Resolved' : 'In progress';
+  $('#svDisc').innerHTML = ''; n.disc.forEach(d => { const li = document.createElement('li'); li.textContent = d; $('#svDisc').appendChild(li); });
+  const f = $('#svFollow');
+  f.className = 'follow' + (n.follow.needed ? ' yes' : '');
+  f.innerHTML = n.follow.needed
+    ? `<span class="fi">!</span><span><b>Follow-up needed · ${n.follow.when}</b><p>${n.follow.what}</p></span>`
+    : `<span class="fi">✓</span><span><b>No follow-up needed</b><p>Everything for this request was completed in the session.</p></span>`;
+  $('#svTodos').innerHTML = n.todos.map(([what, due], i) => `<label for="td${i}"><input type="checkbox" id="td${i}"><span>${what}<span class="due">${due}</span></span></label>`).join('');
+  const count = () => { $('#svTodoCount').textContent = `${$$('#svTodos input:checked').length}/${n.todos.length} done`; };
+  $$('#svTodos input').forEach(i => i.onchange = count); count();
+  $('#svDocs').innerHTML = n.docs.map(([type, name]) => `<div class="doc"><span class="di">${type}</span><span>${name}</span></div>`).join('');
+}
+$('#completeBtn').onclick = () => go('done');
+
+/* X/Y done */
+function renderDone(){
+  const t = st.ticket;
+  $('#dnNum').textContent = t.num;
+  $('#dnWait').textContent = `${t.start * st.svc.per}m`;
+  $('#dnSvc').textContent = st.svcSecs < 60 ? `${st.svcSecs}s` : `${Math.round(st.svcSecs/60)}m`;
+  $('#rateMsg').textContent = '';
+  $('#stars').innerHTML = [1,2,3,4,5].map(n => `<button type="button" data-n="${n}" aria-label="${n} star${n>1?'s':''}">★</button>`).join('');
+  $$('#stars button').forEach(b => b.onclick = () => {
+    $$('#stars button').forEach(x => x.classList.toggle('on', +x.dataset.n <= +b.dataset.n));
+    $('#rateMsg').textContent = 'Thanks. Your feedback goes to the Student Admin Office.';
+  });
+}
+$('#restart').onclick = () => resetAll();
+
+const ENTER = {
+  welcome(){ stopLoop(); renderHome(); },
+  kiosk(){ setKiosk(); },
+  login(){ resetPhoneScan(); },
+  services(){ renderServices(); },
+  checking(){ runChecking(); },
+  ticket(){ renderTicket(); startQueueLoop(); },
+  checkin(){ stopLoop(); drawQR(st.ticket.num); $('#qrNum').textContent = st.ticket.num;
+    const b=$('#scanBtn'); delete b.dataset.done; b.textContent='Simulate counter scan'; b.disabled=false;
+    $('#ciStatus').innerHTML = '<span class="small">Waiting for scan…</span><span class="tag warn"><span class="dot"></span>Not checked in</span>'; },
+  called(){ resetCalled(); startNoShow(); $('#clNum').textContent = st.ticket.num; $('#clRole').textContent = st.svc.name + ' officer'; $('#clTime').textContent = hhmm(st.checkedIn || now());
+    notify(`Now calling ${st.ticket.num} to Counter ${st.ticket.counter}.`); hist = []; },
+  service(){ renderService(); hist = []; },
+  done(){ renderDone(); hist = []; },
+};
+
+function resetAll(){
+  stopLoop(); st = fresh(); hist = [];
+  resetPhoneScan(); setKiosk();
+  const b = $('#cancelBtn'); delete b.dataset.confirm; b.textContent='Leave queue'; b.style.color='';
+  go('welcome', false);
+}
+
+
+/* home: live queue tiles that drift while the home screen is open */
+SERVICES.forEach((s,i) => s.serving = [31, 18, 41, 22, 49][i]);
+const prevServing = {};
+function renderHome(){
+  const h = now().getHours();
+  $('#greet').textContent = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  $('#hiName').textContent = st.name ? 'Hi, ' + st.name : 'Hi there';
+  if (typeof renderOffice === 'function') renderOffice();
+  if (typeof updateMenuAvatar === 'function') updateMenuAvatar();
+  const total = SERVICES.reduce((a,s) => a + s.ahead, 0);
+  const avg = Math.round(SERVICES.reduce((a,s) => a + s.ahead*s.per, 0) / SERVICES.length);
+  $('#w-wait').textContent = total; $('#w-avg').textContent = avg + 'm';
+  $('#boardTime').textContent = 'Updated ' + hhmm(now());
+  renderQueuesExtra();
+  $('#board').innerHTML = SERVICES.map(s => {
+    const wait = s.ahead * s.per, changed = s.code in prevServing && prevServing[s.code] !== s.serving;
+    prevServing[s.code] = s.serving;
+    return `<li class="${changed ? 'flash' : ''}"><span class="ctr mono">${s.counter}</span><span class="svc-n">${s.name}</span><span class="c-serv mono">${s.code}-${String(s.serving).padStart(3,'0')}</span><span class="num mono">${s.ahead}</span><span class="num mono${wait > 20 ? ' long' : ''}">${wait}m</span></li>`;
+  }).join('');
+}
+setInterval(() => {
+  if ($('#s-welcome').hidden && $('#s-queues').hidden) return;
+  const s = SERVICES[Math.floor(Math.random()*SERVICES.length)];
+  if (Math.random() < .6){ s.serving++; s.ahead = Math.max(4, s.ahead - 1); } else { s.ahead = Math.min(20, s.ahead + 1); }
+  renderHome();
+}, 3500);
+
+/* AI assistant bot: Claude answers with the office facts and live queues as context.
+   If Claude can't be reached, answers come from the built-in FAQ below. */
+const BOT_QS = [
+  'Where do I send my medical leave (MC)?',
+  'How long is the wait right now?',
+  'What do I need for a verification letter?',
+  'Can I pay my fees in instalments?',
+  'How do I get my official transcript?',
+  'Can I add or drop a course late?',
+  'I lost my student ID card. What do I do?',
+  'What time does the office close?',
+];
+const svcBy = code => SERVICES.find(s => s.code === code);
+const pad3 = n => String(n).padStart(3, '0');
+function waitLine(code){ const s = svcBy(code); return `Right now ${s.name} (Counter ${s.counter}) has ${s.ahead} waiting, about ${s.ahead*s.per} min.`; }
+function docsService(q){
+  if (/medical|\bmc\b|sick|hospital|clinic|doctor|attendance|absen|exam|extenuat|appeal|transcript/i.test(q)) return 'AR';
+  if (/receipt|proof of pay|payment|scholar|sponsor|loan|ptptn|refund|fee/i.test(q)) return 'FP';
+  if (/add|drop|course|module|advisor|registr|intake/i.test(q)) return 'RG';
+  return 'GE';
+}
+function docsAnswer(q){
+  const code = docsService(q), svc = svcBy(code);
+  const what = code === 'AR' && /medical|\bmc\b|sick|hospital|clinic|doctor/i.test(q) ? 'your **medical leave (MC)**' : 'it';
+  const tip = what !== 'it' ? 'for example, the dates and classes you missed'
+    : {AR:'for example, which exam or class it is about', FP:'for example, what the payment was for and the amount', RG:'for example, the module codes you want to change', VL:'for example, who the letter is for', GE:'say what the document is for'}[code];
+  return `You don't need to queue for this. Send ${what} through **Send documents** instead: scan your card, choose **${svc.name}**, upload the PDF or Word file and add a short note (${tip}). The ${svc.name} team will reply in the app, usually within ${DOC_ETA[code]}, and you'll get a notification.\n[[DOCS:${code}]]`;
+}
+const DOC_TASK = /medical|\bmc\b|sick|hospital|clinic|doctor'?s? (letter|note)|submit|send (in|my|the|a)|upload|hand ?in|where (do|can|should) i (send|submit|give|bring|pass)|receipt|proof|supporting doc|appeal|extenuat|scholarship|sponsor letter|signed form|\bform\b/i;
+const FAQ = [
+  [DOC_TASK, docsAnswer],
+  [/wait|how long|queue|busy/i, () => 'Here are the live queues:\n' + SERVICES.map(s => `- **${s.name}**: ${s.ahead} waiting, about ${s.ahead*s.per} min`).join('\n') + '\nYou get a phone notification when it is nearly your turn, so you can wait anywhere on campus.'],
+  [/verif|letter|enrol|visa|bank|sponsor/i, () => 'For a **Student Verification Letter**, bring your student ID card and tell the counter who the letter is for (bank, embassy or sponsor) and any wording they need. Most letters are ready the same day.\n' + waitLine('VL') + '\n[[TICKET:VL]]'],
+  [/instal|fee|pay|balance|receipt|refund/i, () => 'You can ask for an **instalment plan** at Fees & Payments. Bring your student ID and your latest invoice, and the staff will confirm the amounts and dates. The fee deadline is **28 November**, so the queue is longer this week.\n' + waitLine('FP') + '\n[[TICKET:FP]]'],
+  [/transcript|result|certificate|record/i, () => 'Official **transcripts** are requested at Academic Records. Bring your student ID card, and the staff will confirm any fee and when it will be ready.\n' + waitLine('AR') + '\n[[TICKET:AR]]'],
+  [/add|drop|regist|course|module|late/i, () => 'Late **add/drop** and late registration are handled at Registration. Bring your student ID and the module codes you want to change. Approval can depend on your programme.\n' + waitLine('RG') + '\n[[TICKET:RG]]'],
+  [/lost|card|replace/i, () => 'For a **lost student ID card**, go to General Enquiries and give them your TP number to start a replacement. Until it arrives, the staff there can issue your queue ticket for you.\n' + waitLine('GE') + '\n[[TICKET:GE]]'],
+  [/hour|open|clos|time|where|locat|find/i, () => 'The Student Admin Office is in the **Admin Block, ground floor, Hall B**. It is open **Monday to Friday, 8:00 AM to 4:00 PM**.'],
+  [/^(hi|hello|hey)\b/i, () => 'Hello! Ask me about queues, documents, fees, registration or anything else at the Student Admin Office.'],
+];
+function faqAnswer(q){
+  for (const [re, fn] of FAQ) if (re.test(q)) return fn(q);
+  return "I can't look that up right now, but General Enquiries can help with anything else.\n" + waitLine('GE') + '\n[[TICKET:GE]]';
+}
+function botContext(){
+  const q = SERVICES.map(s => `- ${s.name} (code ${s.code}, Counter ${s.counter}, handles: ${s.sub}): ${s.ahead} waiting, about ${s.ahead*s.per} min, now serving ${s.code}-${pad3(s.serving)}`).join('\n');
+  return `You are the APAdmin assistant, a friendly chat helper inside a university's Student Admin Office queue app. A student is chatting with you on their phone.
+Facts you can rely on:
+- Office: Admin Block, ground floor, Hall B. Open Monday to Friday, 8:00 AM to 4:00 PM. Current local time: ${now().toLocaleString()}.
+- Students bring their student ID card (TP number such as TP101189) and any forms for their request.
+- Fee payment deadline is 28 November, so Fees & Payments is busier this week. Online payment receipts can be downloaded from the student portal.
+- How the app works: scan your student card with your phone camera (or at the kiosk in the lobby), pick a service, get a ticket number and estimated wait, wait anywhere on campus, get a phone notification when 70% of the people ahead have been served, then scan the ticket QR code at the counter. After the session, the notes, follow-up and next steps appear in the app.
+- Live queues right now:
+${q}
+How to answer:
+- Keep it short: 1 to 4 sentences, or a short bullet list using "- ". Warm, clear and professional. Use **bold** only for the key point.
+- If the answer depends on university policy you don't know (exact fees, full document lists, other deadlines), give the usual general answer and say the counter staff will confirm, naming the counter.
+- Never make up ticket numbers or personal details; you cannot see the student's records.
+The document centre comes first. The office wants the counter queue kept for things that really need a visit:
+- APAdmin has a Send documents centre (the Documents card on the home page, or Menu > Send documents). Students scan their card, pick the service, upload PDF or Word files with a short note, and the team replies in the app with a notification. Usual reply times: Student Verification Letter 4 working hours, Fees & Payments 8 working hours, Academic Records and General Enquiries 1 working day, Registration 2 working days.
+- If the student wants to hand in, submit, send or "give" any document or form, tell them clearly that they don't need to queue and should use Send documents, and name the service to choose. This includes medical leave / MC / sick notes, supporting documents for appeals or extenuating circumstances, payment receipts or proof of payment, scholarship or sponsor letters, signed forms, advisor approval forms, and address or name change forms.
+- Which service to choose: medical leave, attendance, exams, appeals and transcripts -> Academic Records (AR); receipts, proof of payment, scholarships, sponsors, refunds -> Fees & Payments (FP); add/drop and advisor forms -> Registration (RG); verification letter requests -> Student Verification Letter (VL); anything else -> General Enquiries (GE).
+- For a document task, say what to write in the note if it helps (for example the dates and classes missed for an MC), then end with a final line containing only [[DOCS:CODE]].
+- Only suggest a counter ticket when it really needs a visit: collecting a stamped original, a new student card, discussing an instalment plan, or something urgent that can't wait for a reply. Then end with a final line containing only [[TICKET:CODE]].
+- Use at most one of these tags, and none for simple questions. CODE is AR, VL, FP, GE or RG.`;
+}
+
+const bot = {busy:false, hist:[], asked:new Set(), noAI:false, opener:null};
+let samplePromise = null;
+function getSample(){
+  if (!samplePromise) samplePromise = (window.claude && window.claude.use) ? window.claude.use('sample').catch(() => null) : Promise.resolve(null);
+  return samplePromise;
+}
+function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmt(t){
+  let html = '', list = false;
+  for (const raw of esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').split('\n')){
+    const m = raw.match(/^\s*[-•]\s+(.*)/);
+    if (m){ if (!list){ html += '<ul>'; list = true; } html += '<li>' + m[1] + '</li>'; continue; }
+    if (list){ html += '</ul>'; list = false; }
+    if (raw.trim()) html += '<p>' + raw + '</p>';
+  }
+  return list ? html + '</ul>' : html;
+}
+const stripTag = t => t.replace(/\[\[[^\]]*(\]\])?/g, '').replace(/\[$/, '').trim();
+function botScroll(){ const m = $('#botMsgs'); m.scrollTop = m.scrollHeight; }
+function botAdd(cls, html){
+  const d = document.createElement('div'); d.className = 'msg ' + cls; d.innerHTML = html;
+  $('#botMsgs').appendChild(d); botScroll(); return d;
+}
+function botChips(list, heading){
+  $$('#botMsgs .sugg').forEach(x => x.remove());
+  if (!list.length) return;
+  const d = document.createElement('div'); d.className = 'sugg';
+  d.innerHTML = `<span class="sugg-h">${heading}</span>`;
+  list.forEach(q => { const b = document.createElement('button'); b.type = 'button'; b.textContent = q; b.onclick = () => botAsk(q); d.appendChild(b); });
+  $('#botMsgs').appendChild(d); botScroll();
+}
+function setBusy(b){
+  bot.busy = b;
+  $('#botSend').disabled = b || !$('#botIn').value.trim();
+  $('#botStatusTxt').textContent = b ? 'Typing…' : 'Online · ask me anything';
+}
+function openBot(){
+  bot.opener = document.activeElement;
+  if (!$('#botMsgs').children.length){
+    botAdd('ai', fmt(`Hi${st.name ? ' ' + st.name : ''}! I'm the **APAdmin assistant**. Ask me anything about the Student Admin Office: queues, documents, fees, registration and more.`));
+    botChips(BOT_QS.slice(0, 5), 'Common questions');
+  }
+  $('#bot').classList.add('open'); $('#botScrim').classList.add('open');
+  setTimeout(() => $('#botIn').focus(), 80);
+}
+function closeBot(){
+  $('#bot').classList.remove('open'); $('#botScrim').classList.remove('open');
+  if (bot.opener && bot.opener.focus) bot.opener.focus();
+}
+$('#botOpen').onclick = openBot;
+$('#botClose').onclick = closeBot;
+$('#botScrim').onclick = closeBot;
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#bot').classList.contains('open')) closeBot(); });
+$('#botIn').addEventListener('input', () => { $('#botSend').disabled = bot.busy || !$('#botIn').value.trim(); });
+$('#botForm').addEventListener('submit', e => { e.preventDefault(); const q = $('#botIn').value.trim(); if (q && !bot.busy) botAsk(q); });
+
+async function botAsk(q){
+  if (bot.busy) return;
+  bot.asked.add(q);
+  $$('#botMsgs .sugg').forEach(x => x.remove());
+  botAdd('me', fmt(q));
+  $('#botIn').value = '';
+  setBusy(true);
+  const bubble = botAdd('ai', '<span class="typing" aria-label="Assistant is typing"><i></i><i></i><i></i></span>');
+  let text = '';
+  const sample = bot.noAI ? null : await getSample();
+  if (sample){
+    const msgs = bot.hist.concat({role:'user', content:q}).slice(-11);
+    msgs[0] = {role:'user', content: botContext() + '\n\nStudent question: ' + msgs[0].content};
+    try {
+      const res = await sample(msgs, {modelTier:'quick', cache:false, onText: ({text:t}) => {
+        const shown = stripTag(t || '');
+        if (shown && shown !== 'Thinking...'){ bubble.innerHTML = fmt(shown); botScroll(); }
+      }});
+      text = (res && res.text) || '';
+    } catch (e){
+      if (e && e.code === 'not_granted') bot.noAI = true;
+      text = (e && e.text) || '';
+    }
+  } else {
+    await new Promise(r => setTimeout(r, 600));   // brief "typing" so the reply doesn't feel instant
+  }
+  if (!text.trim()) text = faqAnswer(q);
+  bubble.innerHTML = fmt(stripTag(text));
+  bot.hist.push({role:'user', content:q}, {role:'assistant', content:text});
+  const d = text.match(/\[\[DOCS:([A-Z]{2})\]\]/), ds = d && svcBy(d[1]);
+  const m = text.match(/\[\[TICKET:([A-Z]{2})\]\]/), s = !ds && m && svcBy(m[1]);
+  if (ds){
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'msg-act';
+    b.innerHTML = `Send documents · ${esc(ds.name)} <span aria-hidden="true">›</span>`;
+    b.onclick = () => { closeBot(); docPreset = ds.code; go('docs'); };
+    $('#botMsgs').appendChild(b);
+  }
+  if (s){
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'msg-act';
+    b.innerHTML = `Get a ticket · ${esc(s.name)} <span aria-hidden="true">›</span>`;
+    b.onclick = () => { closeBot(); st.method = 'app'; go('login'); };
+    $('#botMsgs').appendChild(b);
+  }
+  setBusy(false);
+  botChips(BOT_QS.filter(x => !bot.asked.has(x)).slice(0, 3), 'You might also ask');
+  if (matchMedia('(pointer:fine)').matches) $('#botIn').focus();
+}
+
+/* Send documents: scan, details, sent (with estimated response), review (the office replies), done.
+   In this prototype nothing is uploaded; the office's reply is written by Claude from the note and file names. */
+let pendingDocs = [], savedDocs = {files: [], svc: null, ref: null}, docStep = 'scan', docCase = null, docPreset = null;
+const DOC_MAX = 10 * 1024 * 1024, DOC_LIMIT = 5;
+const DOC_EXT = /\.(pdf|docx?)$/i;
+const DEMO_REVIEW_MS = 12000, DEMO_REPLY_MS = 40000;          // demo timing; real offices take hours
+const DOC_ETA = {AR:'1 working day', VL:'4 working hours', FP:'8 working hours', GE:'1 working day', RG:'2 working days'};
+const OFFICERS = {
+  AR:{name:'Nurul Aina', role:'Academic Records officer'}, VL:{name:'Daniel Lim', role:'Verification Letter officer'},
+  FP:{name:'Tunde Bello', role:'Fees and Payments officer'}, GE:{name:'Priya Nair', role:'General Enquiries officer'},
+  RG:{name:'Hafiz Rahman', role:'Registration officer'}};
+const initials = n => n.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+const fmtSize = n => n < 1048576 ? Math.max(1, Math.round(n / 1024)) + ' KB' : (n / 1048576).toFixed(1) + ' MB';
+const docKind = f => /\.pdf$/i.test(f.name) ? 'PDF' : 'DOC';
+const mmss = ms => { const t = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; };
+$('#docSvc').innerHTML = SERVICES.map(s => `<option value="${s.code}">${s.name}</option>`).join('');
+
+const DSTEPS = ['scan', 'form', 'sent', 'review', 'done'];
+function docShow(step){
+  docStep = step;
+  $('#docsScan').hidden = step !== 'scan'; $('#docsForm').hidden = step !== 'form'; $('#docsSent').hidden = step !== 'sent';
+  $('#docsReview').hidden = step !== 'review'; $('#docsClosed').hidden = step !== 'done';
+  const i = DSTEPS.indexOf(step);
+  DSTEPS.forEach((_, k) => { const li = $('#dStep' + (k + 1)); li.className = (k < i || step === 'done') ? 'ok' : k === i ? 'on' : ''; if (k === i) li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current'); });
+  const btn = $('#docsGo'); btn.disabled = false; btn.hidden = false;
+  if (step === 'scan'){ btn.innerHTML = SCAN_LABEL; $('#docScanBox').hidden = true; $('#docScanner').classList.remove('scanning'); clearCardPhoto($('#docScanner')); $('#docScanAgain').hidden = true; }
+  if (step === 'form'){ $('#docWho').textContent = st.name ? `${st.name} · ${st.tp}` : st.tp;
+    const wi = $('#docWhoImg'); wi.hidden = !st.cardPhoto; if (st.cardPhoto) wi.src = st.cardPhoto; btn.textContent = 'Submit documents'; renderDocs(); }
+  if (step === 'sent'){ btn.textContent = 'Back to home'; }
+  if (step === 'review'){ renderReview(); }
+  if (step === 'done'){ btn.textContent = 'Back to home'; $('#docClosedText').textContent = docCase ? `${docCase.ref} is closed. Keep the reference in case the office asks about it later.` : ''; }
+  $('#docPrivacy').hidden = step === 'scan' || step === 'review' || step === 'done';
+  docTick();
+}
+function renderDocs(){
+  const list = $('#docList'); list.innerHTML = '';
+  pendingDocs.forEach((f, i) => {
+    const row = document.createElement('div'); row.className = 'doc';
+    row.innerHTML = `<span class="di">${docKind(f)}</span><span class="dn"><b></b><span class="small muted">${fmtSize(f.size)}</span></span><button class="rm" type="button">✕</button>`;
+    row.querySelector('b').textContent = f.name;
+    const rm = row.querySelector('.rm'); rm.setAttribute('aria-label', 'Remove ' + f.name);
+    rm.onclick = () => { pendingDocs.splice(i, 1); $('#docErr').textContent = ''; renderDocs(); };
+    list.appendChild(row);
+  });
+  list.hidden = !pendingDocs.length;
+}
+function addDocs(files){
+  const problems = [];
+  [...files].forEach(f => {
+    if (!DOC_EXT.test(f.name)) problems.push(`${f.name} isn't a PDF or Word file.`);
+    else if (f.size > DOC_MAX) problems.push(`${f.name} is larger than 10 MB.`);
+    else if (pendingDocs.length >= DOC_LIMIT) problems.push(`You can send up to ${DOC_LIMIT} files at a time.`);
+    else if (!pendingDocs.some(p => p.name === f.name && p.size === f.size)) pendingDocs.push(f);
+  });
+  $('#docErr').textContent = problems.length ? [...new Set(problems)].join(' ') : '';
+  renderDocs();
+}
+$('#docInput').addEventListener('change', e => { addDocs(e.target.files); e.target.value = ''; });
+const dz = $('#dropzone');
+['dragenter', 'dragover'].forEach(t => dz.addEventListener(t, e => { e.preventDefault(); dz.classList.add('over'); }));
+['dragleave', 'drop'].forEach(t => dz.addEventListener(t, e => { e.preventDefault(); dz.classList.remove('over'); }));
+dz.addEventListener('drop', e => { if (e.dataTransfer && e.dataTransfer.files) addDocs(e.dataTransfer.files); });
+$('#docNote').addEventListener('input', e => {
+  $('#docNoteCount').textContent = `${e.target.value.length} / 500`;
+  if (e.target.getAttribute('aria-invalid') === 'true'){ e.target.removeAttribute('aria-invalid'); $('#docErr').textContent = ''; }
+});
+$('#docRescan').onclick = () => { st.tp = null; st.name = null; docShow('scan'); };
+$('#docScanAgain').onclick = () => { st.tp = null; st.name = null; st.cardPhoto = null; docShow('scan'); docScan(); };
+
+/* Back inside Send documents: Details goes back to the Scan step (card and everything you added are kept);
+   from the Scan step, or after sending, it leaves the screen as usual. */
+function docBackToScan(){
+  docShow('scan');
+  const sc = $('#docScanner'), box = $('#docScanBox');
+  if (st.cardPhoto) showCardPhoto(sc, st.cardPhoto);
+  sc.classList.add('scan-good');
+  box.hidden = false; box.className = 'scan-box ok';
+  $('#docScanMsg').textContent = `✓ ${st.tp} read from your card`;
+  $('#docScanSub').textContent = 'Your files and note are kept. Continue, or scan a different card.';
+  $('#docScanAgain').hidden = false;
+  $('#docsGo').textContent = st.name ? `Continue as ${st.name}` : 'Continue';
+}
+$('#docsBack').onclick = () => {
+  if (docStep === 'form' && st.tp) return docBackToScan();
+  const p = hist.pop(); go(p || 'welcome', false);
+};
+
+function docScan(){
+  const box = $('#docScanBox'), sc = $('#docScanner'), btn = $('#docsGo');
+  scanCard(res => {
+    box.hidden = false; box.className = 'scan-box';
+    if (res.state === 'reading'){ showCardPhoto(sc, res.url); $('#docScanMsg').textContent = 'Reading your card…'; $('#docScanSub').textContent = 'Looking for your TP number'; sc.classList.add('scanning'); btn.disabled = true; btn.textContent = 'Reading card…'; return; }
+    sc.classList.remove('scanning'); btn.disabled = false;
+    sc.classList.add(res.state === 'ok' ? 'scan-good' : 'scan-bad');
+    if (res.state === 'ok'){ st.tp = res.tp; if (res.name) st.name = res.name; st.cardPhoto = sc.querySelector('.scan-photo')?.src || null; docShow('form'); }
+    else { box.classList.add('bad'); $('#docScanMsg').textContent = 'Scan failed'; $('#docScanSub').textContent = res.err; btn.innerHTML = SCAN_LABEL.replace('Scan TP card', 'Scan again'); }
+  });
+}
+
+function docSubmit(){
+  const note = $('#docNote').value.trim();
+  if (!pendingDocs.length){ $('#docErr').textContent = 'Add at least one PDF or Word file.'; return; }
+  if (!$('#docConsent').checked){ $('#docConsent').setAttribute('aria-invalid', 'true'); $('#docErr').textContent = 'Tick the box to agree to the privacy notice before sending.'; $('#docConsent').focus(); return; }
+  if (note.length < 5){ $('#docNote').setAttribute('aria-invalid', 'true'); $('#docErr').textContent = 'Write a short note so the office knows what these documents are for.'; $('#docNote').focus(); return; }
+  const svc = SERVICES.find(s => s.code === $('#docSvc').value);
+  const n0 = pendingDocs.length;
+  askConfirm({
+    title: 'Send these documents?',
+    text: `They'll go to the ${svc.name} team. Check everything is right before you send.`,
+    rows: [['Service', svc.name], ['Files', pendingDocs.map(f => f.name).join(', ')], ['Note', note]],
+    yes: `Yes, send ${n0 === 1 ? 'it' : n0 + ' files'}`, no: 'Go back and edit',
+  }, () => docSend(svc, note));
+}
+function docSend(svc, note){
+  const ref = `DOC-${svc.code}-${String(Math.floor(1000 + Math.random() * 9000))}`;
+  docCase = {ref, svc, files: pendingDocs.slice(), note, tp: st.tp, name: st.name, status: 'sent', sentAt: Date.now(), reply: null, officer: OFFICERS[svc.code]};
+  savedDocs = {files: docCase.files, svc, ref};
+  const n = docCase.files.length;
+  $('#docSentText').textContent = `${n === 1 ? 'Your document is' : n + ' documents are'} with the ${svc.name} team. Reference ${ref}.`;
+  $('#docEtaText').textContent = `Usually within ${DOC_ETA[svc.code]}`;
+  $('#docSummary').innerHTML = '';
+  [['Reference', ref], ['From', st.name ? `${st.name} · ${st.tp}` : st.tp], ['Service', svc.name], ['Files', docCase.files.map(f => f.name).join(', ')], ['Note', note]].forEach(([k, v]) => {
+    const d = document.createElement('div'); d.innerHTML = '<dt></dt><dd></dd>';
+    d.firstChild.textContent = k; d.lastChild.textContent = v; $('#docSummary').appendChild(d);
+  });
+  notify('Documents sent · ' + ref, `${n} file${n > 1 ? 's' : ''} sent to ${svc.name}. Expected reply: ${DOC_ETA[svc.code]}. We'll notify you when they respond.`);
+  pendingDocs = []; $('#docNote').value = ''; $('#docNoteCount').textContent = '0 / 500'; $('#docConsent').checked = false;
+  const c = docCase;
+  setTimeout(() => { if (docCase === c && c.status === 'sent'){ c.status = 'review'; updateDocCount(); if (docOpen() && docStep === 'sent') docShow('review'); } }, DEMO_REVIEW_MS);
+  setTimeout(async () => {
+    if (docCase !== c) return;
+    c.reply = await makeAdminReply(c);
+    if (docCase !== c) return;
+    c.status = 'responded'; c.repliedAt = new Date(); updateDocCount();
+    const first = c.reply.message.split(/(?<=[.!?])\s/)[0];
+    notify(`Reply from ${c.svc.name} · ${c.ref}`, `${c.reply.label}. ${first}`);
+    if (docOpen() && (docStep === 'sent' || docStep === 'review')) docShow('review');
+  }, DEMO_REPLY_MS);
+  updateDocCount(); docShow('sent');
+}
+
+/* Retract: take back a submission before the office replies. The files and note go back into the form. */
+function askRetract(){
+  const c = docCase;
+  if (!c || c.status === 'responded' || c.status === 'done') return;
+  askConfirm({
+    title: 'Retract this submission?',
+    text: `${c.ref} will be withdrawn and the ${c.svc.name} team won't review it. Your files and note go back into the form so you can fix them and send again.`,
+    yes: 'Retract submission', no: 'Keep it', danger: true,
+  }, () => docRetract(c));
+}
+function docRetract(c){
+  if (docCase !== c || c.status === 'responded') return;
+  docCase = null; savedDocs = {files: [], svc: null, ref: null};
+  pendingDocs = c.files.slice();
+  $('#docSvc').value = c.svc.code; $('#docNote').value = c.note; $('#docNoteCount').textContent = `${c.note.length} / 500`;
+  updateDocCount();
+  notify(`Submission retracted · ${c.ref}`, `The ${c.svc.name} team won't review it. Your files and note are back in the form.`);
+  docShow(st.tp ? 'form' : 'scan');
+}
+$$('.d-retract').forEach(b => b.addEventListener('click', askRetract));
+
+/* A small "are you sure?" dialog, used before sending and retracting. */
+let cfAction = null, cfReturn = null;
+function askConfirm(o, onYes){
+  cfAction = onYes; cfReturn = document.activeElement;
+  $('#cfTitle').textContent = o.title; $('#cfText').textContent = o.text;
+  const sum = $('#cfSum'); sum.innerHTML = ''; sum.hidden = !o.rows;
+  (o.rows || []).forEach(([k, v]) => { const d = document.createElement('div'); d.innerHTML = '<dt></dt><dd></dd>'; d.firstChild.textContent = k; d.lastChild.textContent = v; sum.appendChild(d); });
+  const yes = $('#cfYes'); yes.textContent = o.yes; yes.className = 'btn ' + (o.danger ? 'btn-danger' : 'btn-primary');
+  $('#cfNo').textContent = o.no;
+  $('#cf').hidden = false; $('#cfScrim').hidden = false;
+  $('#cfNo').focus();                                    // the safe choice has focus, so Enter can't send by mistake
+}
+function closeConfirm(){
+  $('#cf').hidden = true; $('#cfScrim').hidden = true; cfAction = null;
+  if (cfReturn && cfReturn.focus) cfReturn.focus();
+}
+$('#cfNo').onclick = closeConfirm;
+$('#cfScrim').onclick = closeConfirm;
+$('#cfYes').onclick = () => { const act = cfAction; closeConfirm(); if (act) act(); };
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#cf').hidden) closeConfirm(); });
+
+/* The office's reply. Claude writes it as the officer, from the note and file names; a template is used if Claude can't be reached. */
+const DECISION = {approved:{label:'Approved', cls:'good'}, more_info:{label:'More information needed', cls:'warn'}, received:{label:'Received', cls:'accent'}};
+async function makeAdminReply(c){
+  const off = c.officer, files = c.files.map(f => f.name).join(', ');
+  let out = null;
+  try {
+    const sample = await getSample();
+    if (sample){
+      out = await sample.json(
+        `You are ${off.name}, ${off.role} at the Student Admin Office of a university in Malaysia. ` +
+        `A student (${c.name ? c.name + ', ' : ''}${c.tp}) sent documents to the ${c.svc.name} team through the APAdmin app.\n` +
+        `Their note: """${c.note}"""\nFiles: ${files}\n` +
+        `You can't open the files; answer from what the note and file names describe, as a real officer would after checking them. ` +
+        `Reply with JSON only: {"decision": "approved" | "more_info" | "received", "message": "2 to 4 short, polite, specific sentences to the student, ending with your first name", "next_steps": ["up to 3 short actions for the student, or none"]}. ` +
+        `Use "more_info" only if the note is unclear or something obvious is missing. Amounts are in RM.`,
+        {modelTier: 'quick'});
+    }
+  } catch (e) { out = null; }
+  if (!out || typeof out.message !== 'string' || !out.message.trim()) out = fallbackReply(c);
+  const d = DECISION[out.decision] ? out.decision : 'received';
+  return {decision: d, label: DECISION[d].label, cls: DECISION[d].cls, message: out.message.trim(),
+          steps: (Array.isArray(out.next_steps) ? out.next_steps : []).filter(x => typeof x === 'string' && x.trim()).slice(0, 3)};
+}
+function fallbackReply(c){
+  const first = c.officer.name.split(' ')[0], who = c.name ? `Hi ${c.name}` : 'Hello';
+  const T = {
+    AR:['approved', `${who}, thanks for sending these. I've attached them to your academic record request and the request is now being processed. You'll get your documents within 3 working days. ${first}`, ['Watch for a collection notice in the app']],
+    VL:['approved', `${who}, your documents are in order and your verification letter has been prepared. You can collect it from Counter 2, or download the digital copy from your student email. ${first}`, ['Collect the stamped letter at Counter 2']],
+    FP:['approved', `${who}, I've checked your documents against your fee statement and updated your account. The payment is now recorded and no further action is needed for this item. ${first}`, ['Keep a copy of your receipt', 'Check your updated balance on the portal']],
+    GE:['received', `${who}, thanks, we've received your documents and passed them to the right team. They'll contact you within 2 working days if anything else is needed. ${first}`, []],
+    RG:['more_info', `${who}, thanks for sending these. To finish the registration change I also need your advisor's approval form. Please send it here, or bring it to Counter 5. ${first}`, ['Send the advisor approval form', 'Use the same reference when you send it']],
+  }[c.svc.code];
+  return {decision: T[0], message: T[1], next_steps: T[2]};
+}
+
+function renderReview(){
+  const c = docCase, btn = $('#docsGo');
+  if (!c) return;
+  const off = c.officer;
+  ['#docOffAv', '#docRepAv'].forEach(id => $(id).textContent = initials(off.name));
+  $('#docOffName').textContent = $('#docRepName').textContent = off.name;
+  $('#docOffRole').textContent = $('#docRepRole').textContent = off.role;
+  const replied = c.status === 'responded' || c.status === 'done';
+  $('#docWait').hidden = replied; $('#docReply').hidden = !replied;
+  if (!replied){
+    $('#docWaitText').textContent = c.status === 'review' ? `${off.name.split(' ')[0]} is reviewing your documents…` : 'Waiting for an officer to open your documents…';
+    btn.textContent = 'Back to home';
+  } else {
+    const r = c.reply, tag = $('#docDecision');
+    tag.className = 'tag ' + r.cls; tag.textContent = r.label;
+    $('#docRepMsg').textContent = r.message;
+    $('#docRepSteps').innerHTML = ''; r.steps.forEach(x => { const li = document.createElement('li'); li.textContent = x; $('#docRepSteps').appendChild(li); });
+    $('#docRepStepsWrap').hidden = !r.steps.length;
+    $('#docRepTime').textContent = `Replied ${hhmm(c.repliedAt)} · ${c.ref}`;
+    btn.textContent = r.decision === 'more_info' ? 'Send more documents' : 'Mark as done';
+  }
+}
+function docOpen(){ return !$('#s-docs').hidden; }
+function docTick(){
+  const c = docCase;
+  if (!c) return;
+  const left = c.sentAt + DEMO_REPLY_MS - Date.now();
+  $('#docEtaLeft').textContent = left > 0 ? mmss(left) : 'Any moment';
+  $('#docEtaBar').style.width = Math.min(100, Math.round((Date.now() - c.sentAt) / DEMO_REPLY_MS * 100)) + '%';
+  $('#docWaitLeft').textContent = c.status === 'responded' ? '' : (left > 0 ? `Expected reply in about ${mmss(left)} (demo)` : 'Writing a reply…');
+}
+setInterval(() => { if (docOpen()) docTick(); }, 1000);
+
+function updateDocCount(){
+  const c = docCase;
+  const txt = !c ? 'Send forms to the admin office'
+    : c.status === 'sent' ? `${c.ref} · Sent`
+    : c.status === 'review' ? `${c.ref} · In review`
+    : c.status === 'responded' ? `${c.ref} · Reply ready`
+    : `${c.ref} · Done`;
+  $('#docCount').textContent = txt;
+}
+$('#docsGo').onclick = () => {
+  if (docStep === 'scan') return (st.tp && !$('#docScanAgain').hidden) ? docShow('form') : docScan();
+  if (docStep === 'form') return docSubmit();
+  if (docStep === 'review' && docCase && docCase.status === 'responded'){
+    if (docCase.reply.decision === 'more_info'){            // follow-up on the same service
+      const svc = docCase.svc; docCase.status = 'done'; updateDocCount();
+      docShow(st.tp ? 'form' : 'scan'); $('#docSvc').value = svc.code;
+      $('#docNote').value = `Follow-up to ${docCase.ref}: `; $('#docNoteCount').textContent = `${$('#docNote').value.length} / 500`;
+      docCase = null; return;
+    }
+    docCase.status = 'done'; updateDocCount(); return docShow('done');
+  }
+  hist = []; go('welcome', false);
+};
+$('#docNew').onclick = () => { docCase = null; updateDocCount(); docShow(st.tp ? 'form' : 'scan'); };
+ENTER.docs = () => {
+  $('#docErr').textContent = ''; $('#docNote').removeAttribute('aria-invalid');
+  const c = docCase;
+  if (c && c.status !== 'done') return docShow(c.status === 'sent' ? 'sent' : 'review');
+  pendingDocs = [];
+  $('#docSvc').value = (docPreset ? svcBy(docPreset) : (st.svc || SERVICES[0])).code; docPreset = null;
+  docShow(st.tp ? 'form' : 'scan');
+};
+$$('.docs-launch').forEach(b => b.addEventListener('click', () => go('docs')));
+
+/* Live queues page: quietest service right now and the current hour on the busy chart */
+function renderQueuesExtra(){
+  const q = SERVICES.reduce((a, b) => (a.ahead * a.per <= b.ahead * b.per ? a : b));
+  $('#quietest').innerHTML = `<span class="ico" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span>Shortest wait right now: <b></b> at Counter ${q.counter}, about ${q.ahead * q.per} min.</span>`;
+  $('#quietest b').textContent = q.name;
+  const h = now().getHours();
+  $$('#hours .hb').forEach(b => b.classList.toggle('now', +b.dataset.h === h));
+}
+ENTER.queues = () => renderHome();
+$('#queuesGo').onclick = () => { st.method = 'app'; go(st.tp ? 'services' : 'login'); };
+
+/* ---------- Office rules: hours, public holidays, queue full ---------- */
+const OFFICE = {open: 8, close: 16};                                   // Monday to Friday, 8:00 AM to 4:00 PM
+const HOLIDAYS = {'01-01': "New Year's Day", '05-01': 'Labour Day', '08-31': 'National Day', '09-16': 'Malaysia Day', '12-25': 'Christmas Day'};
+const QUEUE_CAP = 20;                                                  // a service stops taking tickets at this many waiting
+let previewOpen = false;                                               // demo: let people try the queue out of hours
+const mmdd = d => `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const isWorkday = d => d.getDay() >= 1 && d.getDay() <= 5 && !HOLIDAYS[mmdd(d)];
+function officeStatus(at = now()){
+  const h = at.getHours() + at.getMinutes() / 60;
+  if (previewOpen || (isWorkday(at) && h >= OFFICE.open && h < OFFICE.close)) return {open: true};
+  let day = new Date(at);
+  if (!(isWorkday(at) && h < OFFICE.open)){ day.setDate(day.getDate() + 1); }
+  for (let k = 0; k < 14 && !isWorkday(day); k++) day.setDate(day.getDate() + 1);
+  const same = day.toDateString() === at.toDateString();
+  const tomorrow = new Date(at); tomorrow.setDate(at.getDate() + 1);
+  const when = same ? 'today' : day.toDateString() === tomorrow.toDateString() ? 'tomorrow' : day.toLocaleDateString([], {weekday: 'long'});
+  return {open: false, holiday: HOLIDAYS[mmdd(at)] || null, opensText: `${when} at 8:00 AM`};
+}
+function renderOffice(){
+  const o = officeStatus();
+  $('#openWrap').classList.toggle('closed', !o.open);
+  $('#openTag').textContent = o.open ? (previewOpen ? 'Preview: open as if in office hours' : 'Office open · closes 4:00 PM') : `Office closed · opens ${o.opensText}`;
+  $('#closedBanner').hidden = o.open;
+  if (!o.open){
+    $('#closedTitle').textContent = o.holiday ? `Closed today for ${o.holiday}` : 'The office is closed right now';
+    $('#closedText').textContent = `Tickets open ${o.opensText} (Monday to Friday, 8:00 AM to 4:00 PM). You can still send documents and ask the assistant.`;
+  }
+}
+$('#previewOpen').onclick = () => { previewOpen = true; renderOffice(); };
+function bookingBlock(svc){
+  const o = officeStatus();
+  if (!o.open) return {title: o.holiday ? `Closed for ${o.holiday}` : 'The office is closed', text: `Tickets open ${o.opensText}. Office hours are Monday to Friday, 8:00 AM to 4:00 PM.`, back: 'Back to home'};
+  if (svc.ahead >= QUEUE_CAP) return {title: `${svc.name} is full right now`, text: `${svc.ahead} people are already waiting. Try again in a few minutes, or pick another service.`, back: 'Choose another service'};
+  return null;
+}
+function checkFail(why){
+  $('#checkMsgTitle').textContent = why.title; $('#checkMsgText').textContent = why.text;
+  $('#checkMsg').hidden = false; $('#checkFoot').hidden = false; $('#checkBack').textContent = why.back;
+  $('#checkBack').onclick = () => why.back === 'Back to home' ? (hist = [], go('welcome', false)) : go('services', false);
+}
+
+/* ---------- No-show: a called student has a few minutes to reach the counter ---------- */
+const NO_SHOW_MS = 60000;                                              // demo: 1 minute (5 minutes on the live system)
+let nsTimer = null, nsEnd = 0;
+function clearNoShow(){ clearInterval(nsTimer); nsTimer = null; }
+function resetCalled(){
+  clearNoShow();
+  const b = $('#startSvc'); delete b.dataset.missed; b.disabled = false;
+  $('#clCallout').classList.remove('missed'); $('#clTitle').textContent = "You're up"; $('#clEyebrow').textContent = 'Now calling';
+  $('#clSub').innerHTML = `Please go to <b>Counter <span class="cnum">${st.ticket.counter}</span></b>`;
+  b.innerHTML = `I'm at Counter <span class="cnum">${st.ticket.counter}</span>`;
+}
+function startNoShow(){
+  nsEnd = Date.now() + NO_SHOW_MS;
+  const tick = () => {
+    const left = nsEnd - Date.now(), el = $('#nsTimer');
+    if (left <= 0) return missedTurn();
+    el.innerHTML = `Counter ${st.ticket.counter} will hold your turn for <b>${mmss(left)}</b> <span class="muted">(demo; 5 minutes on the live system)</span>`;
+    el.classList.toggle('low', left < 15000);
+  };
+  tick(); nsTimer = setInterval(tick, 1000);
+}
+function missedTurn(){
+  clearNoShow();
+  const t = st.ticket, b = $('#startSvc');
+  t.noShow = true;
+  $('#clCallout').classList.add('missed'); $('#clTitle').textContent = 'Turn missed'; $('#clEyebrow').textContent = 'Ticket closed';
+  $('#clSub').textContent = `You didn't reach Counter ${t.counter} in time.`;
+  $('#nsTimer').classList.remove('low');
+  $('#nsTimer').textContent = `Ticket ${t.num} was closed at ${hhmm(now())}. You can join the ${st.svc.name} queue again; you'll go to the back.`;
+  b.dataset.missed = '1'; b.textContent = 'Rejoin the queue';
+  notify(`Ticket closed · ${t.num}`, `We called your number but you didn't reach Counter ${t.counter} in time. You can rejoin the queue now.`);
+}
+function rejoinQueue(){
+  delete $('#startSvc').dataset.missed; st.ticket = null; hist = []; go('checking', false);
+}
+
+/* ---------- Notification settings (kept on this device in the preview) ---------- */
+const NOTIFY_KEY = 'apadmin.notify';
+let notifyPrefs = {email: '', turn: true, called: true, docs: true, notes: true};
+try { Object.assign(notifyPrefs, JSON.parse(localStorage.getItem(NOTIFY_KEY) || '{}')); } catch (e) {}
+function notifyKind(title, text){
+  const t = `${title} ${text}`;
+  if (/^Your turn is approaching/.test(title)) return 'turn';
+  if (/Now calling|It's your turn|^Ticket closed/.test(t)) return 'called';
+  if (/^Session notes/.test(title)) return 'notes';
+  if (/^Documents sent|^Reply from/.test(title)) return 'docs';
+  return null;
+}
+ENTER.settings = () => {
+  $('#nEmail').value = notifyPrefs.email || ''; $('#nEmail').removeAttribute('aria-invalid'); $('#nErr').textContent = '';
+  $('#nTurn').checked = notifyPrefs.turn; $('#nCalled').checked = notifyPrefs.called; $('#nDocs').checked = notifyPrefs.docs; $('#nNotes').checked = notifyPrefs.notes;
+};
+$('#nEmail').addEventListener('input', () => { $('#nEmail').removeAttribute('aria-invalid'); $('#nErr').textContent = ''; });
+$('#nSave').onclick = () => {
+  const email = $('#nEmail').value.trim();
+  if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ $('#nEmail').setAttribute('aria-invalid', 'true'); $('#nErr').textContent = 'Enter a valid email address, like name@example.com.'; $('#nEmail').focus(); return; }
+  notifyPrefs = {email, turn: $('#nTurn').checked, called: $('#nCalled').checked, docs: $('#nDocs').checked, notes: $('#nNotes').checked};
+  try { localStorage.setItem(NOTIFY_KEY, JSON.stringify(notifyPrefs)); } catch (e) {}
+  const p = $('#push'); $('#pushTitle').textContent = 'Notification settings saved';
+  $('#pushText').textContent = email ? `Alerts will also go to ${email}.` : 'Alerts will appear in the app.'; $('#pushTime').textContent = 'now';
+  $('#srLive').textContent = 'Notification settings saved.';
+  p.classList.add('show'); clearTimeout(p._t); p._t = setTimeout(() => p.classList.remove('show'), 4000);
+  const back = hist.pop(); go(back || 'welcome', false);
+};
+
+/* ---------- Privacy links and keyboard access ---------- */
+$$('.privacy-link').forEach(b => b.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); go('privacy'); }));
+$('#dropzone').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); $('#docInput').click(); } });
+$('#docConsent').addEventListener('change', () => { $('#docConsent').removeAttribute('aria-invalid'); if (/privacy notice/.test($('#docErr').textContent)) $('#docErr').textContent = ''; });
+
+/* Home menu beside the assistant button */
+const menuBtn = $('#menuBtn'), homeMenu = $('#homeMenu');
+const MI = {
+  ticket:'<path d="M4 7h16v3a2 2 0 0 0 0 4v3H4v-3a2 2 0 0 0 0-4z"/><path d="M14 7v10" stroke-dasharray="2 2"/>',
+  file:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>',
+  chat:'<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>',
+  list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+  info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
+  login:'<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/>',
+  logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
+  bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>'
+};
+const mItem = (icon, label, act, extra = '', cls = '') =>
+  `<button type="button" role="menuitem" class="mi ${cls}" data-act="${act}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${MI[icon]}</svg><span>${label}</span>${extra}</button>`;
+function renderMenu(){
+  const logged = !!st.tp, n = savedDocs.files.length;
+  homeMenu.innerHTML =
+    (logged ? `<div class="mh"><b>${esc(st.name || 'Student')}</b><span class="mono">${esc(st.tp)}</span></div>`
+            : `<div class="mh"><b>Not logged in</b><span>Log in to take a ticket</span></div>`) +
+    mItem('ticket', st.ticket ? 'My ticket' : 'Get a ticket', 'ticket', st.ticket ? `<em class="mono">${esc(st.ticket.num)}</em>` : '') +
+    mItem('file', 'Send documents', 'docs', docCase ? `<em>${docCase.status === 'responded' ? 'Reply ready' : docCase.status === 'done' ? 'Done' : 'In progress'}</em>` : '') +
+    mItem('chat', 'AI assistant bot', 'bot') +
+    mItem('list', 'Live queues', 'queues') +
+    mItem('info', 'Before you come', 'info') +
+    mItem('bell', 'Notifications', 'settings') +
+    mItem('shield', 'Privacy and your data', 'privacy') +
+    (logged ? mItem('logout', 'Log out', 'logout', '', 'danger') : mItem('login', 'Log in', 'login'));
+}
+function updateMenuAvatar(){
+  const c = $('#menuAvatar'), nm = st.name && st.name.trim();
+  if (nm) c.textContent = nm.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  else c.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>';
+}
+function openMenu(){
+  renderMenu(); homeMenu.hidden = false; menuBtn.setAttribute('aria-expanded', 'true');
+  const first = homeMenu.querySelector('[role=menuitem]'); if (first) first.focus({preventScroll: true});
+}
+function closeMenu(refocus){
+  if (homeMenu.hidden) return;
+  homeMenu.hidden = true; menuBtn.setAttribute('aria-expanded', 'false');
+  if (refocus) menuBtn.focus();
+}
+menuBtn.addEventListener('click', e => { e.stopPropagation(); homeMenu.hidden ? openMenu() : closeMenu(); });
+document.addEventListener('click', e => { if (!e.target.closest('.h3-menu-wrap')) closeMenu(); });
+document.addEventListener('keydown', e => {
+  if (homeMenu.hidden) return;
+  if (e.key === 'Escape') { closeMenu(true); return; }
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp'){
+    e.preventDefault();
+    const items = [...homeMenu.querySelectorAll('[role=menuitem]')];
+    let i = items.indexOf(document.activeElement);
+    i = e.key === 'ArrowDown' ? (i + 1) % items.length : (i - 1 + items.length) % items.length;
+    items[i].focus();
+  }
+});
+homeMenu.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const a = b.dataset.act; closeMenu();
+  if (a === 'ticket'){ if (st.ticket) go('ticket'); else { st.method = 'app'; go(st.tp ? 'services' : 'login'); } }
+  else if (a === 'docs') go('docs');
+  else if (a === 'bot') openBot();
+  else if (a === 'queues') go('queues');
+  else if (a === 'info') $('#infoH').scrollIntoView({behavior: 'smooth', block: 'start'});
+  else if (a === 'login'){ st.method = 'app'; go('login'); }
+  else if (a === 'logout') resetAll();
+  else if (a === 'settings') go('settings');
+  else if (a === 'privacy') go('privacy');
+});
+
+/* Home: start cards, assistant shortcuts and popular-question chips */
+$$('[data-start]').forEach(b => b.addEventListener('click', () => { st.method = b.dataset.method; go(b.dataset.start); }));
+$$('.bot-launch').forEach(b => b.addEventListener('click', openBot));
+$('#homeChips').innerHTML = '';
+BOT_QS.forEach(q => {
+  const c = document.createElement('button'); c.type = 'button'; c.textContent = q;
+  c.onclick = () => { openBot(); botAsk(q); };
+  $('#homeChips').appendChild(c);
+});
+
+go('welcome', false);
+go.ready = true;
+})();
+</script>
+</body></html>
