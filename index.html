@@ -738,6 +738,7 @@ button.side:hover{color:var(--ink)}
   .body{padding-top:var(--sp-8);gap:var(--sp-7,28px)}
   /* grid rows were squashing boxes with hidden overflow (e.g. the live queue board showed one row) */
   .screen .body > :not(.d-pane){min-height:max-content}
+  .screen .body{grid-auto-rows:max-content}          /* rows always as tall as what's in them, so boxes never overlap */
   /* documents form: service + note on the left, files + consent on the right */
   #docsForm{grid-template-rows:auto auto 1fr auto}
   #docsForm > .field:nth-child(2){grid-column:1;grid-row:2}
